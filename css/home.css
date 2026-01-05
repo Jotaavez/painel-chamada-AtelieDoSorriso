@@ -61,14 +61,13 @@ body {
     article {
         flex: 1;
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 40px;
         width: 100%;
         margin-top: 15vh;
         margin-bottom: 15vh;
-        flex-wrap: wrap;
 
         a {
             display: inline-block;
@@ -86,7 +85,7 @@ body {
             box-shadow: 0 6px 20px rgba(139, 0, 0, 0.25);
             overflow: hidden;
             letter-spacing: 0.5px;
-            min-width: 200px;
+            width: 280px;
             text-align: center;
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
         }

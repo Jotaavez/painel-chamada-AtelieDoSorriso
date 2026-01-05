@@ -26,9 +26,13 @@ Painel web para gestão de chamadas em consultório odontológico, com telas de 
 3) Dispare chamadas pela recepção/dentista; o painel de TV reage lendo `localStorage`.
 
 ### Ajustes rápidos
-- Playlist do painel: em [pages/painel-chamada.html](pages/painel-chamada.html), troque `PLAYLIST_ID` na URL do `iframe` pelo ID da playlist do YouTube.
-- Som de notificação: arquivo em assets/sounds (pode substituir mantendo o nome ou ajustar a fonte em [js/painel-chamada.js](js/painel-chamada.js)).
-- Branding: logos em assets/images/logo; cores principais em cada CSS (bordô `#8B0000` e dourado `#D4AF37`).
+- **Dentistas fixos**: em [js/recepcao.js](js/recepcao.js#L55), edite o array `fixedDoctors`:
+  ```javascript
+  const fixedDoctors = ['Dra. Jessica Reis', 'Dra. Dani', 'Dr. Novo Dentista'];
+  ```
+- **Playlist do painel**: em [pages/painel-chamada.html](pages/painel-chamada.html), troque `PLAYLIST_ID` na URL do `iframe` pelo ID da playlist do YouTube.
+- **Som de notificação**: arquivo em assets/sounds (pode substituir mantendo o nome ou ajustar a fonte em [js/painel-chamada.js](js/painel-chamada.js)).
+- **Branding**: logos em assets/images/logo; cores principais em cada CSS (bordô `#8B0000` e dourado `#D4AF37`).
 
 ### Dados e sincronização
 - Armazenamento: `localStorage` com a chave `call-notifications` guarda as chamadas em array JSON.

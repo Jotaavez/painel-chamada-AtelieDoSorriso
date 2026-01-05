@@ -88,7 +88,7 @@ body {
         width: 100%;
         max-width: 1400px;
         margin: 130px auto 40px auto;
-        padding: 0 20px;
+        padding: 0 20px 150px 20px;
         grid-template-areas:
             "register doctors"
             "register patients"
@@ -552,7 +552,7 @@ footer {
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 15px;
+    padding: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -560,8 +560,8 @@ footer {
     z-index: 10;
 
     img {
-        width: 100px;
-        height: 100px;
+        width: 70px;
+        height: 70px;
         object-fit: contain;
     }
 }
