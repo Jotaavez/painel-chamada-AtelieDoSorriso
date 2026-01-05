@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Painel Dentista</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/painel-dentista.css">
+</head>
+<body>
+    <header>
+        <div class="header-left"><img src="../assets/images/logo/logo-atelie-white.svg" alt="logo"></div>
+        <div class="header-center"><div id="dentist-info"><strong id="dentist-name"></strong><div id="dentist-room"></div></div></div>
+        <div class="header-right">
+            <div class="conn-status" id="conn-status-dentist" title="Status de conexão">Conectando…</div>
+            <button class="exit small" onclick="window.location.href='./home.html'">Home</button>
+            <button id="logout" class="btn">Sair</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="list" id="patients-list"></div>
+        <div class="last-called" id="last-called">Último chamado: —</div>
+    </div>
+
+    <script src="../js/ws-client.js"></script>
+    <script src="../js/sse-client.js"></script>
+    <script src="../js/painel-dentista.js"></script>
+    <script>
+        (function(){
+            const el = document.getElementById('conn-status-dentist');
+            if(!el) return;
+            function update(){ const s = document.body.dataset.ws || document.body.dataset.sse || 'connecting'; const map={connecting:'Conectando…',connected:'Conectado',polling:'Polling',error:'Erro',unsupported:'Sem SSE'}; el.textContent = map[s] || s; el.dataset.state = s; }
+            update(); setInterval(update, 800);
+        })();
+    </script>
+</body>
+</html>

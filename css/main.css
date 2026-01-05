@@ -1,0 +1,35 @@
+@font-face {
+    font-family: Montserrat;
+    src: url("../assets/fonts/Montserrat-Regular.ttf") format("truetype");
+    font-weight: 400;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+
+        font-family: 'Montserrat', sans-serif;
+
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+        height: 100vh;
+}
+
+/* standard button */
+.btn{ background: var(--color-bordo, #8B3A3A); color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:600 }
+.btn:hover{ filter:brightness(1.05); }
+.btn:active{ transform:translateY(1px); }
+
+/* small utilities */
+.conn-status{ font-size:13px; padding:6px 10px; border-radius:14px; background:rgba(0,0,0,0.05); color:inherit }
+
+/* responsive helpers */
+@media (max-width:900px){
+    .container{ padding:12px }
+}
+
+/* global exit button (top-right) */
+.exit{ position:fixed; right:20px; top:20px; background:var(--color-bordo,#8B3A3A); color:#fff; border:none; padding:8px 10px; border-radius:6px; cursor:pointer; z-index:2200 }
+.exit.small{ right:12px; top:12px; padding:6px 8px; border-radius:5px }
+}

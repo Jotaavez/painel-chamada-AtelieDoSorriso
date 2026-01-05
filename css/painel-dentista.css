@@ -1,0 +1,27 @@
+:root{--color-bordo:#8B3A3A}
+body.painel-dentista{margin:0;font-family:inherit;background:#fff}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8f8f8;border-bottom:1px solid #eee}
+.header-left img{height:40px}
+.header-center{text-align:center;flex:1}
+.header-right{display:flex;align-items:center;gap:8px}
+.btn{background:var(--color-bordo);color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;font-weight:600}
+.conn-status{font-size:13px;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,0.04)}
+.container{padding:16px}
+.list{max-width:900px;margin:0 auto}
+.patient{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #eee}
+.meta{font-size:13px;color:#555}
+.last-called{margin-top:16px;padding:12px;border-top:2px solid #eee}
+
+/* Modal styles for painel-dentista */
+#simple-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
+#simple-modal.show{display:flex}
+#simple-modal .modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.4)}
+#simple-modal .modal-box{position:relative;background:#fff;padding:18px;border-radius:8px;min-width:280px;color:#000}
+#simple-modal .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
+
+@media (max-width:700px){
+	.header-center{display:none}
+	.patient{flex-direction:column;align-items:flex-start;gap:8px}
+	.list{padding:8px}
+}
+

@@ -4,8 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="../css/main.css">
 </head>
 <body>
-    
+    <header>
+        <img src="../assets/images/logo/logo-atelie-white.svg" alt="logo-atelie" class="logo">
+    </header>
+
+    <article>
+        <form action="#" method="POST" class="login-form">
+            <h2>Login</h2>
+            <div class="input-group">
+                <label for="password">Senha</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" required>
+                    <button type="button" class="toggle-password" aria-label="Mostrar senha">
+                        <img src="../assets/images/password/smileclose-password.svg" alt="Mostrar" width="20" height="20">
+                    </button>
+                </div>
+            </div>
+            <button type="submit" class="login-button">Entrar</button>
+        </form>
+    </article>
+
+    <footer>
+        <h3>
+            @2026 ‒ Atelie do Sorriso Castanhal
+        </h3>
+    </footer>
+
+    <script src="../js/auth.js"></script>
+    <script src="../js/background-image.js"></script>
 </body>
 </html>

@@ -1,0 +1,13 @@
+{
+  "name": "painel-chamada-ws",
+  "version": "1.0.0",
+  "description": "WebSocket server for painel-chamada-AtelieDoSorriso",
+  "main": "server/ws-server.js",
+  "scripts": {
+    "start": "node server/ws-server.js"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "ws": "^8.13.0"
+  }
+}

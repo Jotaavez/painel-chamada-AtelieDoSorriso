@@ -1,0 +1,12 @@
+header{
+    img{
+        height: 10vh;
+    }
+}
+
+main{
+    a{
+        padding: 10px 20px;
+        background-color: silver;
+    }
+}

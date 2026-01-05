@@ -1,0 +1,24 @@
+:root{--color-bordo:#8B3A3A}
+body.chamada-paciente{margin:0;font-family:inherit;background:#222;color:#fff}
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.panel{width:80%;height:80vh;background:rgba(255,255,255,0.03);display:flex;border-radius:8px;overflow:hidden;position:relative}
+.left{flex:1;background:#000;display:flex;align-items:center;justify-content:center}
+.right{width:420px;padding:24px;background:rgba(255,255,255,0.04);display:flex;flex-direction:column;align-items:center;justify-content:space-between}
+.logo img{max-width:180px}
+.current{font-size:40px;text-align:center;margin-top:12px}
+.sub{font-size:18px;opacity:0.9}
+.last{font-size:14px;opacity:0.8}
+.exit{position:fixed;right:20px;top:20px;background:var(--color-bordo);color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+iframe{width:100%;height:100%;border:0}
+
+/* connection status */
+.conn-status{position:absolute;right:12px;top:12px;background:rgba(255,255,255,0.06);padding:6px 10px;border-radius:14px;font-size:12px;opacity:0.95}
+
+/* flash animation for new calls */
+.flash{animation: flash-it 900ms ease-in-out}
+@keyframes flash-it{0%{transform:scale(1);color:#fff}30%{transform:scale(1.03);color:#ffd;}60%{transform:scale(1);color:#fff}100%{transform:scale(1);}}
+
+/* connection colors */
+.conn-status[data-state="connected"]{ background:#e6ffed; color:#056a34 }
+.conn-status[data-state="error"]{ background:#ffdede; color:#8a1b1b }
+.conn-status[data-state="polling"]{ background:#fff8e6; color:#6a5200 }

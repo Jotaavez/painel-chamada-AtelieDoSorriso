@@ -1,0 +1,21 @@
+:root{ --color-bordo: #8B3A3A; }
+body.painel-recepcao{ font-family: inherit; margin:0; padding:20px; background:#f2f4f8; }
+.container{ max-width:1100px; margin:0 auto; display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+.card{ background:white; border:3px solid var(--color-bordo); border-radius:8px; padding:16px; }
+.card h3{ margin-top:0; color:var(--color-bordo); }
+form .row{ display:flex; gap:8px; margin-bottom:8px; }
+label{ font-size:14px; display:block; margin-bottom:4px; }
+input[type=text], select, textarea{ width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; }
+.small{ width:150px; }
+.btn{ background:var(--color-bordo); color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; }
+.conn-status{ font-size:13px; padding:6px 10px; border-radius:12px; background:rgba(0,0,0,0.04); display:inline-block }
+.list{ max-height:400px; overflow:auto; }
+.item{ padding:8px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+.meta{ font-size:13px; color:#444; }
+.urgency{ color:#a00; font-weight:700; }
+.controls button{ margin-left:8px; }
+
+@media (max-width:900px){
+	.container{ grid-template-columns: 1fr; }
+	.small{ width:100%; }
+}
