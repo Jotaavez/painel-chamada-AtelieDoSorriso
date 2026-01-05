@@ -2,7 +2,7 @@
 // Inicialize com suas credenciais do Firebase
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, set, get, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, set, get, update, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // Substitua com suas credenciais do Firebase Console
 const firebaseConfig = {
@@ -21,4 +21,4 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 
 // Exporta para uso em outros arquivos
-export { database, ref, set, get, update, remove, onValue };
+export { database, ref, set, get, update, remove, onValue, runTransaction };

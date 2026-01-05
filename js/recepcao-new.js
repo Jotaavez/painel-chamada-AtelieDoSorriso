@@ -1,5 +1,5 @@
 // Script para o painel da recepção - com suporte Firebase/localStorage
-import { saveData, loadData } from './backend-helper.js';
+import { saveData, loadData, onDataChange, pushToArray, removeFromArray, unshiftToArray } from './backend-helper.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('patient-form');
@@ -121,8 +121,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Carrega pacientes do localStorage
-    async function loadPatientsList() {
-        const patients = (await loadData('pending-patients')) || [];
+    async function loadPatientsList(patients) {
+        if (!patients) {
+            patients = (await loadData('pending-patients')) || [];
+        }
+        
         patientList.innerHTML = '';
 
         if (patients.length === 0) {
@@ -170,9 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const name = e.target.dataset.name;
                 const confirmed = await showConfirm(`Remover ${name}?`);
                 if (confirmed) {
-                    const updated = patients.filter(p => p.name !== name);
-                    await saveData('pending-patients', updated);
-                    loadPatientsList();
+                    await removeFromArray('pending-patients', p => p.name !== name);
                 }
             });
         });
@@ -180,7 +181,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Chama paciente (envia para a TV)
     async function callPatient(patient) {
-        const calls = (await loadData('call-notifications')) || [];
         const consultorio = patient.doctor.includes('Jessica') ? '01' : patient.doctor.includes('Dani') ? '02' : '03';
         
         const newCall = {
@@ -191,20 +191,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             timestamp: new Date().toISOString()
         };
 
-        calls.unshift(newCall);
-        await saveData('call-notifications', calls);
+        // Adiciona chamada atomicamente
+        await unshiftToArray('call-notifications', newCall);
 
-        // Remove da fila de espera
-        const patients = (await loadData('pending-patients')) || [];
-        const updated = patients.filter(p => p.name !== patient.name);
-        await saveData('pending-patients', updated);
+        // Remove da fila de espera atomicamente
+        await removeFromArray('pending-patients', p => p.name !== patient.name);
 
-        // Adiciona ao histórico
-        const history = (await loadData('call-history')) || [];
-        history.unshift(newCall);
-        await saveData('call-history', history);
+        // Adiciona ao histórico atomicamente
+        await unshiftToArray('call-history', newCall);
 
-        loadPatientsList();
         await showInfo(`${patient.name} chamado para o consultório ${consultorio}`);
     }
 
@@ -232,12 +227,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             timestamp: new Date().toISOString()
         };
 
-        const patients = (await loadData('pending-patients')) || [];
-        patients.push(newPatient);
-        await saveData('pending-patients', patients);
+        await pushToArray('pending-patients', newPatient);
 
         form.reset();
-        loadPatientsList();
         await showInfo('Paciente registrado com sucesso!');
     });
 
@@ -253,14 +245,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const confirmed = await showConfirm('Limpar todo o histórico de chamadas?');
             if (confirmed) {
                 await saveData('call-history', []);
-                loadHistoryList();
             }
         });
     }
 
     // Carrega histórico
-    async function loadHistoryList() {
-        const history = (await loadData('call-history')) || [];
+    async function loadHistoryList(history) {
+        if (!history) {
+            history = (await loadData('call-history')) || [];
+        }
+        
         const historyList = document.getElementById('history-list');
         
         if (!historyList) return;
@@ -294,7 +288,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Inicializa
+    // Configura listeners em tempo real
+    onDataChange('pending-patients', (patients) => {
+        loadPatientsList(patients);
+    });
+
+    onDataChange('call-history', (history) => {
+        loadHistoryList(history);
+    });
+
+    // Inicializa com dados atuais
     loadDoctorsList();
     loadPatientsList();
     loadHistoryList();

@@ -9,11 +9,12 @@ let get = null;
 let update = null;
 let remove = null;
 let onValue = null;
+let runTransaction = null;
 
 // Tenta carregar Firebase
 async function initializeBackend() {
     try {
-        const { database: db, ref: r, set: s, get: g, update: u, remove: rm, onValue: ov } = await import('./firebase-config.js');
+        const { database: db, ref: r, set: s, get: g, update: u, remove: rm, onValue: ov, runTransaction: rt } = await import('./firebase-config.js');
         database = db;
         ref = r;
         set = s;
@@ -21,6 +22,7 @@ async function initializeBackend() {
         update = u;
         remove = rm;
         onValue = ov;
+        runTransaction = rt;
         useFirebase = true;
         console.log('✓ Firebase inicializado com sucesso');
     } catch (e) {
@@ -62,14 +64,14 @@ async function loadData(key) {
     return data ? JSON.parse(data) : null;
 }
 
-// Listener em tempo real para chamadas
-function onCallsChange(callback) {
+// Listener em tempo real para qualquer chave
+function onDataChange(key, callback) {
     if (useFirebase && database && ref && onValue) {
         try {
-            const refPath = ref(database, 'call-notifications');
+            const refPath = ref(database, key);
             onValue(refPath, (snapshot) => {
                 const data = snapshot.val();
-                callback(data || []);
+                callback(data || (key.includes('patients') || key.includes('history') || key.includes('notifications') ? [] : null));
             });
             return;
         } catch (e) {
@@ -79,12 +81,85 @@ function onCallsChange(callback) {
     
     // Fallback: polling localStorage a cada segundo
     setInterval(() => {
-        const data = localStorage.getItem('call-notifications');
-        callback(data ? JSON.parse(data) : []);
+        const data = localStorage.getItem(key);
+        callback(data ? JSON.parse(data) : (key.includes('patients') || key.includes('history') || key.includes('notifications') ? [] : null));
     }, 1000);
+}
+
+// Listener em tempo real para chamadas (retrocompatibilidade)
+function onCallsChange(callback) {
+    return onDataChange('call-notifications', callback);
+}
+
+// Adiciona item a um array de forma atômica (evita race conditions)
+async function pushToArray(key, newItem) {
+    if (useFirebase && database && ref && runTransaction) {
+        try {
+            const refPath = ref(database, key);
+            await runTransaction(refPath, (currentData) => {
+                const arr = Array.isArray(currentData) ? currentData : [];
+                arr.push(newItem);
+                return arr;
+            });
+            return;
+        } catch (e) {
+            console.error('Erro ao adicionar item no Firebase:', e);
+        }
+    }
+    
+    // Fallback localStorage
+    const data = localStorage.getItem(key);
+    const arr = data ? JSON.parse(data) : [];
+    arr.push(newItem);
+    localStorage.setItem(key, JSON.stringify(arr));
+}
+
+// Remove item de um array de forma atômica
+async function removeFromArray(key, filterFn) {
+    if (useFirebase && database && ref && runTransaction) {
+        try {
+            const refPath = ref(database, key);
+            await runTransaction(refPath, (currentData) => {
+                const arr = Array.isArray(currentData) ? currentData : [];
+                return arr.filter(filterFn);
+            });
+            return;
+        } catch (e) {
+            console.error('Erro ao remover item no Firebase:', e);
+        }
+    }
+    
+    // Fallback localStorage
+    const data = localStorage.getItem(key);
+    const arr = data ? JSON.parse(data) : [];
+    const updated = arr.filter(filterFn);
+    localStorage.setItem(key, JSON.stringify(updated));
+}
+
+// Adiciona item no início de um array de forma atômica
+async function unshiftToArray(key, newItem) {
+    if (useFirebase && database && ref && runTransaction) {
+        try {
+            const refPath = ref(database, key);
+            await runTransaction(refPath, (currentData) => {
+                const arr = Array.isArray(currentData) ? currentData : [];
+                arr.unshift(newItem);
+                return arr;
+            });
+            return;
+        } catch (e) {
+            console.error('Erro ao adicionar item no início no Firebase:', e);
+        }
+    }
+    
+    // Fallback localStorage
+    const data = localStorage.getItem(key);
+    const arr = data ? JSON.parse(data) : [];
+    arr.unshift(newItem);
+    localStorage.setItem(key, JSON.stringify(arr));
 }
 
 // Inicializa ao carregar
 initializeBackend();
 
-export { saveData, loadData, onCallsChange, useFirebase };
+export { saveData, loadData, onDataChange, onCallsChange, pushToArray, removeFromArray, unshiftToArray, useFirebase };
