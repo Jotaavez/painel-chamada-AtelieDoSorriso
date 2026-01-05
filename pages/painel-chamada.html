@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Chamada</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/painel-chamada.css">
+</head>
+<body>
+    <header class="topbar">
+        <a class="exit-btn" href="../pages/home.html">Sair</a>
+    </header>
+
+    <main class="call-stage">
+        <section class="call-card">
+            <div class="call-left">
+                <div class="video-frame">
+                    <!-- Substitua PLAYLIST_ID pela playlist do YouTube desejada -->
+                    <iframe id="call-video" src="https://www.youtube.com/embed?listType=playlist&list=PLAYLIST_ID&autoplay=1&mute=1&controls=0&loop=1&rel=0&modestbranding=1" title="Playlist institucional" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <div class="call-right">
+                <div class="call-clock" id="call-clock">00:00:00</div>
+
+                <div class="call-current" id="call-display">
+                    <p class="call-patient" id="call-patient-name">Aguardando chamada...</p>
+                    <p class="call-consultorio" id="call-consultorio"></p>
+                    <p class="call-doctor" id="call-doctor"></p>
+                </div>
+
+                <div class="call-recent">
+                    <div class="recent-header">
+                        <span>Chamadas Recentes</span>
+                    </div>
+                    <div class="recent-list" id="recent-calls-list">
+                        <p class="empty-message">Nenhuma chamada recente</p>
+                    </div>
+                </div>
+
+                <div class="call-logo">
+                    <img src="../assets/images/logo/logo-atelie-color-tooth.svg" alt="Logo Ateliê">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <audio id="notification-sound" preload="auto" crossorigin="anonymous">
+        <source src="../assets/sounds/new-notification-027-383749.mp3" type="audio/mpeg">
+    </audio>
+
+    <script src="../js/painel-chamada.js"></script>
+    <script src="../js/gradient-bg.js"></script>
+</body>
+</html>

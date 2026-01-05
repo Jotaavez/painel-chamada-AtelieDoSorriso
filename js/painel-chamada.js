@@ -1,135 +1,162 @@
-// Tela de chamada: busca o último paciente chamado e atualiza a tela
-const API = '../php';
+// Script para o painel de chamadas
+document.addEventListener('DOMContentLoaded', () => {
+    const patientNameEl = document.getElementById('call-patient-name');
+    const consultorioEl = document.getElementById('call-consultorio');
+    const doctorEl = document.getElementById('call-doctor');
+    const recentCallsList = document.getElementById('recent-calls-list');
+    const notificationSound = document.getElementById('notification-sound');
+    const clockEl = document.getElementById('call-clock');
+    
+    let lastCallId = null;
+    let previousCall = null;
+    let blinkTimeout = null;
 
-async function api(path, method='GET', body=null){
-    const opts = {method, headers:{}};
-    if(body && !(body instanceof FormData)){
-        opts.headers['Content-Type']='application/x-www-form-urlencoded';
-        opts.body = new URLSearchParams(body).toString();
-    } else if(body instanceof FormData){ opts.body = body; }
-    const res = await fetch(`${API}/${path}`, opts);
-    return res.json();
-}
-
-function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-let lastSeenTimestamp = 0;
-
-function buildYouTubePlayer(container, playlistId){
-    // If playlistId is empty, do nothing.
-    if(!playlistId) return;
-    // embed playlist with autoplay and loop
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://www.youtube.com/embed?listType=playlist&list=${encodeURIComponent(playlistId)}&autoplay=1&mute=0&controls=0&rel=0&loop=1&playlist=${encodeURIComponent(playlistId)}`;
-    iframe.allow = 'autoplay; encrypted-media';
-    container.innerHTML = '';
-    container.appendChild(iframe);
-}
-
-async function update() {
-    try{
-        const res = await api('list_patients.php');
-        if(!res.ok) return;
-        const patients = res.patients || [];
-        // find most recent called (last_called)
-        const called = patients.filter(p=>p.status==='called' && p.last_called).sort((a,b)=> (b.last_called||0)-(a.last_called||0))[0];
-        const lastCalled = patients.filter(p=>p.status==='called' || p.status==='done').sort((a,b)=> (b.last_called||0)-(a.last_called||0))[0];
-
-        const currentNameEl = document.getElementById('current-name');
-        const currentInfoEl = document.getElementById('current-info');
-        const lastEl = document.getElementById('last-called');
-
-        if(called){
-            currentNameEl.textContent = called.name;
-            currentInfoEl.textContent = `${called.room || ''} — ${called.called_by || ''}`.trim();
-            // if new call, play sound
-            if((called.last_called||0) > lastSeenTimestamp){
-                lastSeenTimestamp = called.last_called;
-                const audio = document.getElementById('notify-sound');
-                if(audio){ audio.pause(); audio.currentTime = 0; audio.play().catch(()=>{}); }
-            }
-        } else {
-            currentNameEl.textContent = '—';
-            currentInfoEl.textContent = '—';
-        }
-
-        if(lastCalled){
-            lastEl.textContent = `Último chamado: ${lastCalled.name} — ${lastCalled.service} (${lastCalled.called_by || ''})`;
-        } else {
-            lastEl.textContent = 'Último chamado: —';
-        }
-
-    }catch(e){ console.error(e); }
-}
-
-document.addEventListener('DOMContentLoaded', ()=>{
-    const container = document.getElementById('player-container');
-    const playlist = container && container.getAttribute('data-playlist');
-    buildYouTubePlayer(container, playlist);
-
-    // controls: toggle videos (hide/show iframe) and mute audio
-    const toggleBtn = document.getElementById('toggle-videos');
-    const muteBtn = document.getElementById('mute-audio');
-    const audioEl = document.getElementById('notify-sound');
-    let iframeSrc = container.querySelector('iframe') ? container.querySelector('iframe').src : null;
-    if(toggleBtn){
-        toggleBtn.addEventListener('click', ()=>{
-            const iframe = container.querySelector('iframe');
-            if(iframe && iframe.src){
-                // hide
-                iframeSrc = iframe.src;
-                container.innerHTML = '';
-                toggleBtn.textContent = 'Mostrar vídeos';
-            } else {
-                // restore
-                if(iframeSrc) {
-                    const f = document.createElement('iframe'); f.src = iframeSrc; f.allow = 'autoplay; encrypted-media'; f.setAttribute('allow','autoplay; encrypted-media'); f.style.width='100%'; f.style.height='100%';
-                    container.appendChild(f);
-                }
-                toggleBtn.textContent = 'Ocultar vídeos';
-            }
-        });
+    function updateClock() {
+        if (!clockEl) return;
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        clockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
     }
-    if(muteBtn){
-        muteBtn.addEventListener('click', ()=>{
-            if(!audioEl) return;
-            audioEl.muted = !audioEl.muted;
-            muteBtn.textContent = audioEl.muted ? 'Desmutar' : 'Mudo';
-        });
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Exibe chamada atual
+    function displayCurrentCall(call) {
+        if (!call) {
+            patientNameEl.textContent = 'Aguardando chamada...';
+            consultorioEl.textContent = '';
+            doctorEl.textContent = '';
+            return;
+        }
+        patientNameEl.textContent = call.patientName;
+        consultorioEl.textContent = `Consultório ${call.consultorio}`;
+        doctorEl.textContent = call.doctorName;
     }
 
-    // click to replay sound
-    const currentNameEl = document.getElementById('current-name');
-    if(currentNameEl) currentNameEl.addEventListener('click', ()=>{ const a=document.getElementById('notify-sound'); if(a){ a.currentTime=0; a.play().catch(()=>{}); } });
+    function triggerBlink() {
+        if (!patientNameEl) return;
+        patientNameEl.classList.remove('call-blink');
+        if (blinkTimeout) {
+            clearTimeout(blinkTimeout);
+        }
+        // Força reflow para reiniciar a animação
+        void patientNameEl.offsetWidth;
+        patientNameEl.classList.add('call-blink');
+        blinkTimeout = setTimeout(() => {
+            patientNameEl.classList.remove('call-blink');
+        }, 3000);
+    }
 
-    // realtime: prefer WebSocket, then SSE, then polling
-    const connEl = document.getElementById('connection-status');
-    function statusCb(s){ if(!connEl) return; const map = {connecting:'Conectando…', connected:'Conectado', polling:'Polling', error:'Erro — reconectando', unsupported:'Sem SSE — polling'}; connEl.textContent = map[s] || s; connEl.dataset.state = s; connEl.dataset.status = s; }
-    if (window.WSClient){
-        WSClient.init(null, (patients)=>{ handlePatients(patients||[]); }, { status: statusCb });
-    } else if (window.SSEClient){
-        SSEClient.init('/php/stream.php', (patients)=>{ handlePatients(patients||[]); }, { pollInterval:2000, status: statusCb });
-    } else { update(); setInterval(update,2000); }
+    // Função para tocar som com múltiplas tentativas
+    function playNotificationSound() {
+        if (!notificationSound) {
+            console.log('Elemento de áudio não encontrado');
+            return;
+        }
+        
+        try {
+            notificationSound.volume = 1.0;
+            notificationSound.currentTime = 0;
+            
+            // Tenta tocar
+            const playPromise = notificationSound.play();
+            
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log('✓ Som tocando com sucesso');
+                    })
+                    .catch(error => {
+                        console.log('✗ Erro ao tocar:', error.message);
+                        // Tentativa 2
+                        setTimeout(() => {
+                            notificationSound.play()
+                                .then(() => console.log('✓ Som tocando (tentativa 2)'))
+                                .catch(e => {
+                                    console.log('✗ Tentativa 2 falhou:', e.message);
+                                    // Tentativa 3
+                                    setTimeout(() => {
+                                        notificationSound.play()
+                                            .then(() => console.log('✓ Som tocando (tentativa 3)'))
+                                            .catch(e3 => console.log('✗ Tentativa 3 falhou:', e3.message));
+                                    }, 500);
+                                });
+                        }, 200);
+                    });
+            }
+        } catch (e) {
+            console.log('Erro ao tentar tocar som:', e);
+        }
+    }
+
+    // Função para carregar chamadas recentes (apenas a anterior)
+    function loadRecentCalls() {
+        recentCallsList.innerHTML = '';
+        
+        if (!previousCall) {
+            recentCallsList.innerHTML = '<p class="empty-message">Nenhuma chamada recente</p>';
+            return;
+        }
+
+        const date = new Date(previousCall.timestamp);
+        const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+        const item = document.createElement('div');
+        item.className = 'recent-item';
+        item.innerHTML = `
+            <strong>${previousCall.patientName}</strong>
+            <span class="recent-meta">Consultório ${previousCall.consultorio} · ${previousCall.doctorName}</span>
+            <span class="recent-time">${time}</span>
+        `;
+
+        recentCallsList.appendChild(item);
+    }
+
+    // Função para verificar novas chamadas
+    function checkForNewCalls() {
+        const rawCalls = localStorage.getItem('call-notifications');
+        let calls = [];
+        
+        if (rawCalls) {
+            try {
+                calls = JSON.parse(rawCalls);
+            } catch (e) {
+                console.error('Erro ao carregar chamadas:', e);
+                return;
+            }
+        }
+
+        if (calls.length === 0) {
+            displayCurrentCall(null);
+            previousCall = null;
+            recentCallsList.innerHTML = '<p class="empty-message">Nenhuma chamada recente</p>';
+            return;
+        }
+
+        // Ordena por timestamp mais recente
+        calls.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Pega apenas a ÚLTIMA chamada
+        const latestCall = calls[0];
+
+        // Se for uma nova chamada, toca o som e exibe
+        if (latestCall.id !== lastCallId) {
+            // A chamada atual vira a anterior
+            previousCall = lastCallId ? calls.find(c => c.id === lastCallId) : null;
+            lastCallId = latestCall.id;
+            
+            // Toca o som
+            playNotificationSound();
+
+            // Exibe a chamada
+            displayCurrentCall(latestCall);
+            triggerBlink();
+        }
+
+        // Atualiza lista de chamadas recentes (mostra a anterior)
+        loadRecentCalls();
+    }
+
+    checkForNewCalls();
+    setInterval(checkForNewCalls, 1000);
 });
-
-function handlePatients(patients){
-    // similar logic to update(): find most recent called
-    const called = (patients||[]).filter(p=>p.status==='called' && p.last_called).sort((a,b)=> (b.last_called||0)-(a.last_called||0))[0];
-    const lastCalled = (patients||[]).filter(p=>p.status==='called' || p.status==='done').sort((a,b)=> (b.last_called||0)-(a.last_called||0))[0];
-    const currentNameEl = document.getElementById('current-name');
-    const currentInfoEl = document.getElementById('current-info');
-    const lastEl = document.getElementById('last-called');
-    if(called){
-        currentNameEl.textContent = called.name;
-        currentInfoEl.textContent = `${called.room || ''} — ${called.called_by || ''}`.trim();
-        if((called.last_called||0) > lastSeenTimestamp){
-            lastSeenTimestamp = called.last_called;
-            const audio = document.getElementById('notify-sound'); if(audio){ audio.pause(); audio.currentTime=0; audio.play().catch(()=>{}); }
-            // visual highlight
-            currentNameEl.classList.remove('flash');
-            void currentNameEl.offsetWidth;
-            currentNameEl.classList.add('flash');
-        }
-    } else { currentNameEl.textContent='—'; currentInfoEl.textContent='—'; }
-    if(lastCalled){ lastEl.textContent = `Último chamado: ${lastCalled.name} — ${lastCalled.service} (${lastCalled.called_by || ''})`; } else { lastEl.textContent='Último chamado: —'; }
-}

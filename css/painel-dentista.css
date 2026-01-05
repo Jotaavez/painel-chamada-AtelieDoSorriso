@@ -1,27 +1,449 @@
-:root{--color-bordo:#8B3A3A}
-body.painel-dentista{margin:0;font-family:inherit;background:#fff}
-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:#f8f8f8;border-bottom:1px solid #eee}
-.header-left img{height:40px}
-.header-center{text-align:center;flex:1}
-.header-right{display:flex;align-items:center;gap:8px}
-.btn{background:var(--color-bordo);color:#fff;border:none;padding:8px 10px;border-radius:6px;cursor:pointer;font-weight:600}
-.conn-status{font-size:13px;padding:6px 10px;border-radius:12px;background:rgba(0,0,0,0.04)}
-.container{padding:16px}
-.list{max-width:900px;margin:0 auto}
-.patient{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid #eee}
-.meta{font-size:13px;color:#555}
-.last-called{margin-top:16px;padding:12px;border-top:2px solid #eee}
-
-/* Modal styles for painel-dentista */
-#simple-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000}
-#simple-modal.show{display:flex}
-#simple-modal .modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.4)}
-#simple-modal .modal-box{position:relative;background:#fff;padding:18px;border-radius:8px;min-width:280px;color:#000}
-#simple-modal .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}
-
-@media (max-width:700px){
-	.header-center{display:none}
-	.patient{flex-direction:column;align-items:flex-start;gap:8px}
-	.list{padding:8px}
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+
+    header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        padding: 10px 40px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        height: auto;
+        z-index: 10;
+        background: linear-gradient(180deg, rgb(0, 0, 0) 0%, rgba(139, 0, 0, 0) 100%);
+
+        a {
+            background: none;
+            border: 2px solid #8B0000;
+            color: white;
+            padding: 10px 25px;
+            font-size: 0.95em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            justify-self: start;
+        }
+
+        a:hover {
+            background-color: rgba(139, 0, 0, 0.1);
+            border-color: #D4AF37;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+        }
+
+        a:active {
+            transform: scale(0.97);
+        }
+
+        h1 {
+            color: white;
+            margin: 0;
+            font-size: 1.8em;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-align: center;
+            line-height: 1.4;
+            justify-self: center;
+        }
+
+        .clock {
+            color: #D4AF37;
+            font-size: 1.5em;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            padding: 12px 20px;
+            background: rgba(139, 0, 0, 0.1);
+            border: 2px solid #D4AF37;
+            border-radius: 8px;
+            min-width: 180px;
+            text-align: center;
+            flex-shrink: 0;
+            margin-left: 20px;
+            justify-self: end;
+        }
+
+        p {
+            color: #D4AF37;
+            margin: 0;
+            font-size: 1.05em;
+            font-weight: 500;
+            display: none;
+        }
+    }
+    }
+
+    article {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 50px;
+        width: 100%;
+        max-width: 900px;
+        margin: 130px auto 15vh auto;
+        padding: 0 20px;
+
+        .panel-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(245, 245, 245, 0.95));
+            border: 3px solid #8B0000;
+            border-radius: 15px;
+            padding: 35px;
+            box-shadow: 0 8px 25px rgba(139, 0, 0, 0.12);
+            transition: all 0.3s ease;
+        }
+
+        .panel-section:hover {
+            box-shadow: 0 12px 35px rgba(139, 0, 0, 0.18);
+        }
+
+        h2 {
+            color: #8B0000;
+            font-size: 1.8em;
+            margin: 0 0 25px 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 5px;
+            height: 30px;
+            background: linear-gradient(to bottom, #8B0000, #D4AF37);
+            border-radius: 3px;
+        }
+
+        #clear-history-btn {
+            background-color: #8B0000;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 11px 25px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.25);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+            align-self: flex-start;
+        }
+
+        #clear-history-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background-color: rgba(212, 175, 55, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+            z-index: -1;
+        }
+
+        #clear-history-btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        #clear-history-btn:hover {
+            background-color: #A00000;
+            box-shadow: 0 6px 16px rgba(139, 0, 0, 0.35);
+            transform: translateY(-2px);
+            border-bottom: 2px solid #D4AF37;
+        }
+
+        #clear-history-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
+        }
+
+        #patients-waiting,
+        #patients-history {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 80px;
+
+            .empty-message {
+                color: #999;
+                font-size: 1.05em;
+                margin: 0;
+                text-align: center;
+                padding: 20px;
+            }
+
+            p {
+                color: #000000;
+                font-size: 1.05em;
+                margin: 0;
+                text-align: center;
+                padding: 20px;
+            }
+        }
+
+        .patient-item {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 12px 18px;
+            background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
+            border: 2px solid #e7e7e7;
+            border-radius: 12px;
+            padding: 18px 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 600;
+            font-size: 1.5em;
+        }
+
+        .patient-item:hover {
+            border-color: #8B0000;
+            box-shadow: 0 6px 18px rgba(139, 0, 0, 0.18);
+            transform: translateX(4px);
+        }
+
+        .patient-info {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .patient-name {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: #2f2f2f;
+            margin: 0;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .urgent-badge {
+            background: #b30000;
+            color: white;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 0.78em;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 12px rgba(179, 0, 0, 0.35);
+            font-weight: 700;
+        }
+
+        .patient-service {
+            font-size: 0.98em;
+            color: #555;
+            margin: 0;
+        }
+
+        .patient-consultorio {
+            font-size: 0.95em;
+            color: #8B0000;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .patient-dentista {
+            font-size: 0.9em;
+            color: #888;
+            margin: 0;
+        }
+
+        .patient-actions {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .patient-button {
+            background-color: #8B0000;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.25);
+            white-space: nowrap;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .patient-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background-color: rgba(212, 175, 55, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.5s ease, height 0.5s ease;
+            z-index: -1;
+        }
+
+        .patient-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .patient-button:hover {
+            background-color: #A00000;
+            box-shadow: 0 6px 16px rgba(139, 0, 0, 0.35);
+            transform: translateY(-2px);
+            border-bottom: 2px solid #D4AF37;
+        }
+
+        .patient-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
+        }
+}
+
+/* Modal Premium */
+#call-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    z-index: 1000 !important;
+    justify-content: center !important;
+    align-items: center !important;
+    display: none;
+}
+
+#call-modal > div {
+    background: linear-gradient(to bottom, #ffffff, #f5f5f5) !important;
+    padding: 40px 35px !important;
+    border-radius: 15px !important;
+    text-align: center !important;
+    min-width: 420px !important;
+    box-shadow: 0 10px 40px rgba(139, 0, 0, 0.3) !important;
+    border: 3px solid #8B0000 !important;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#modal-patient-name {
+    font-size: 1.8em !important;
+    margin-bottom: 15px !important;
+    color: #8B0000 !important;
+    font-weight: 600 !important;
+}
+
+#modal-patient-info {
+    font-size: 1.1em !important;
+    margin-bottom: 25px !important;
+    color: #5a5a5a !important;
+}
+
+#call-modal p:not(#modal-patient-name):not(#modal-patient-info) {
+    font-size: 1.15em !important;
+    color: #333 !important;
+    margin-bottom: 30px !important;
+    font-weight: 500 !important;
+}
+
+#call-modal > div > div {
+    display: flex !important;
+    gap: 15px !important;
+    justify-content: center !important;
+}
+
+#modal-yes-btn,
+#modal-no-btn {
+    padding: 13px 35px !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 1em !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+    white-space: nowrap !important;
+}
+
+#modal-yes-btn {
+    background: #4CAF50 !important;
+}
+
+#modal-yes-btn:hover {
+    background: #45a049 !important;
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+#modal-yes-btn:active {
+    transform: translateY(0) !important;
+}
+
+#modal-no-btn {
+    background: #8B0000 !important;
+}
+
+#modal-no-btn:hover {
+    background: #A00000 !important;
+    box-shadow: 0 6px 16px rgba(139, 0, 0, 0.35) !important;
+    transform: translateY(-2px) !important;
+    border-bottom: 2px solid #D4AF37 !important;
+}
+
+#modal-no-btn:active {
+    transform: translateY(0) !important;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(180deg, rgba(139, 0, 0, 0) 0%, rgba(255, 255, 255, 0.049) 100%);
+    z-index: 10;
+
+    img {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+    }
+}

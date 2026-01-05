@@ -1,10 +1,34 @@
-// auth.js — autenticação simples no cliente
-// ATENÇÃO: este método é puramente para conveniência local/testes.
-// Não é seguro para produção: a senha fica visível no código.
+const SITE_PASSWORD = '040722';
 
-const SITE_PASSWORD = 'trocar123'; // altere aqui para sua senha desejada
+function showErrorModal(message) {
+    const modal = document.getElementById('errorModal');
+    const messageEl = document.getElementById('modalMessage');
+    messageEl.textContent = message;
+    modal.classList.add('active');
+}
+
+function closeErrorModal() {
+    const modal = document.getElementById('errorModal');
+    modal.classList.remove('active');
+}
 
 document.addEventListener('DOMContentLoaded', () => {
+    // fechar modal ao clicar no botão OK
+    const closeBtn = document.getElementById('closeModalBtn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeErrorModal);
+    }
+
+    // fechar modal ao clicar fora dela
+    const modal = document.getElementById('errorModal');
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeErrorModal();
+            }
+        });
+    }
+
     // mostrar/ocultar senha
     const toggle = document.querySelector('.toggle-password');
     const pwdInput = document.getElementById('password');
@@ -31,9 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pw === SITE_PASSWORD) {
             localStorage.setItem('authed', '1');
             // redireciona para a página inicial do painel
-            window.location.href = './home.html';
+            window.location.href = '../pages/home.html';
         } else {
-            alert('Senha incorreta');
+            showErrorModal('Senha incorreta');
             form.password.value = '';
             form.password.focus();
         }

@@ -1,84 +1,99 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Painel Recepção</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel da Recepção</title>
     <link rel="stylesheet" href="../css/main.css">
     <link rel="stylesheet" href="../css/painel-recepcao.css">
 </head>
 <body>
-    <div style="display:flex;align-items:center;justify-content:space-between">
+    <header>
+        <a href="../pages/home.html">Sair</a>
         <h1>Painel da Recepção</h1>
-            <div style="display:flex;gap:8px;align-items:center">
-            <div class="conn-status" id="conn-status-recep" title="Status de conexão">Conectando…</div>
-            <button class="exit small" onclick="window.location.href='./home.html'">Sair</button>
-        </div>
-    </div>
+        <div id="clock" class="clock">00:00:00</div>
+    </header>
 
     <div class="container">
-        <div class="card">
-            <h3>Cadastrar paciente</h3>
-            <form id="form-create">
-                <div class="row">
-                    <div style="flex:1">
-                        <label for="name">Nome</label>
-                        <input type="text" id="name" name="name" required>
-                    </div>
-                    <div class="small">
-                        <label for="doctor">Doutor(a)</label>
-                        <input type="text" id="doctor" name="doctor" required>
-                    </div>
+        <div class="manage-doctors">
+            <h3>Gerenciar Dentistas</h3>
+            <div id="doctors-list"></div>
+        </div>
+
+        <div class="form-section">
+            <h2>Registrar Paciente</h2>
+            <form id="patient-form">
+                <div class="input-group">
+                    <label for="patient-name">Nome do Paciente</label>
+                    <input type="text" id="patient-name" name="patientName" required>
                 </div>
 
-                <div class="row">
-                    <div style="flex:1">
-                        <label for="service">Serviço</label>
-                        <select id="service" name="service">
-                            <option>Avaliação</option>
-                            <option>Manutenção</option>
-                            <option>Urgência</option>
-                            <option>Outro</option>
-                        </select>
-                    </div>
-                    <div style="flex:1">
-                        <label for="other">Especificar (se Outro)</label>
-                        <input type="text" id="other" name="other">
-                    </div>
+                <div class="input-group">
+                    <label for="doctor">Doutor</label>
+                    <select id="doctor" name="doctor" required>
+                        <option value="">Escolha o doutor</option>
+                    </select>
                 </div>
 
-                <div style="margin-bottom:10px">
-                    <label><input type="checkbox" id="urgency" name="urgency"> Marcar como Urgência</label>
+                <div class="input-group">
+                    <label for="service">Serviço</label>
+                    <select id="service" name="service" required>
+                        <option value="">Escolha o serviço</option>
+                        <option value="Avaliação">Avaliação</option>
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Prótese">Prótese</option>
+                        <option value="Outro">Outro (especificar)</option>
+                    </select>
                 </div>
 
-                <div style="display:flex; gap:8px;">
-                    <button class="btn" type="submit">Adicionar</button>
-                    <button id="clear-waiting" class="btn" type="button">Limpar fila de espera</button>
+                <div class="input-group" id="other-service-group" style="display: none;">
+                    <label for="other-service-detail">Especificar Serviço</label>
+                    <textarea id="other-service-detail" name="otherServiceDetail" placeholder="Descreva o serviço"></textarea>
                 </div>
+
+                <div class="input-group checkbox-group">
+                    <input type="checkbox" id="urgente" name="urgente">
+                    <label for="urgente">Paciente Urgente</label>
+                </div>
+
+                <button type="submit">Registrar Paciente</button>
             </form>
         </div>
 
-        <div class="card">
-            <h3>Fila de espera</h3>
-            <div class="list" id="waiting-list"></div>
+        <div class="list-section">
+            <h2>Fila de Pacientes</h2>
+            <div id="patient-list">
+                <p class="empty-message">Nenhum paciente registrado</p>
+            </div>
         </div>
 
-        <div class="card" style="grid-column:1/3;">
-            <h3>Histórico do dia</h3>
-            <div class="list" id="history-list"></div>
+        <div class="history-section">
+            <h2>Histórico de Chamadas
+                <button id="reset-history-btn" type="button">Limpar Histórico</button>
+            </h2>
+            <div id="history-list">
+                <p class="empty-message">Nenhum paciente no histórico</p>
+            </div>
         </div>
     </div>
 
-    <script src="../js/ws-client.js"></script>
-    <script src="../js/sse-client.js"></script>
-    <script src="../js/painel-recepcao.js"></script>
-    <script>
-        (function(){
-            const el = document.getElementById('conn-status-recep');
-            if(!el) return;
-            function update(){ const s = document.body.dataset.ws || document.body.dataset.sse || 'connecting'; const map={connecting:'Conectando…',connected:'Conectado',polling:'Polling',error:'Erro',unsupported:'Sem SSE'}; el.textContent = map[s] || s; el.dataset.state = s; }
-            update(); setInterval(update, 800);
-        })();
-    </script>
+    <footer>
+        <img src="../assets/images/logo/logo-atelie-color-tooth.svg" alt="logo-atelie">
+    </footer>
+
+    <!-- Modal de confirmação/aviso reutilizável -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="confirm-message"></p>
+            <div class="modal-actions">
+                <button id="confirm-yes" type="button">Confirmar</button>
+                <button id="confirm-no" type="button">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/clock.js"></script>
+    <script src="../js/recepcao.js"></script>
+    <script src="../js/gradient-bg.js"></script>
 </body>
 </html>
