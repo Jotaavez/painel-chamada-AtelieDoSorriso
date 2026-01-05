@@ -1,5 +1,7 @@
-// Script para o painel do dentista
-document.addEventListener('DOMContentLoaded', () => {
+// Script para o painel do dentista - com suporte Firebase/localStorage
+import { saveData, loadData, onDataChange, pushToArray, removeFromArray, unshiftToArray } from './backend-helper.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
     const raw = localStorage.getItem('dentist');
     if (!raw) {
         // não autenticado: volta ao login
@@ -39,45 +41,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalYesBtn = document.getElementById('modal-yes-btn');
     const modalNoBtn = document.getElementById('modal-no-btn');
 
+    // Elementos do modal de confirmação de exclusão
+    const deleteHistoryModal = document.getElementById('delete-history-modal');
+    const confirmDeleteHistoryBtn = document.getElementById('confirm-delete-history-btn');
+    const cancelDeleteHistoryBtn = document.getElementById('cancel-delete-history-btn');
+
     let currentPatientForModal = null;
 
     // Botão para limpar histórico (apenas oculta para o dentista)
     clearHistoryBtn.addEventListener('click', () => {
-        if (confirm('Deseja ocultar seu histórico de chamadas? (O histórico continuará visível na recepção)')) {
-            const rawHistory = localStorage.getItem('patients-history');
-            let history = [];
-            
-            if (rawHistory) {
-                try {
-                    history = JSON.parse(rawHistory);
-                } catch (e) {
-                    history = [];
-                }
-            }
+        deleteHistoryModal.style.display = 'flex';
+    });
 
-            // Pega IDs das entradas deste dentista para ocultar
-            const myHistoryIds = history
-                .filter(p => p.doctor === dentist.name)
-                .map(p => p.id);
+    // Confirmar exclusão do histórico
+    confirmDeleteHistoryBtn.addEventListener('click', async () => {
+        const history = await loadData('call-history') || [];
 
-            // Armazena IDs ocultos para este dentista
-            const hiddenKey = `hidden-history-${dentist.name}`;
-            const rawHidden = localStorage.getItem(hiddenKey);
-            let hidden = [];
-            if (rawHidden) {
-                try {
-                    hidden = JSON.parse(rawHidden);
-                } catch (e) {
-                    hidden = [];
-                }
-            }
+        // Pega IDs das entradas deste dentista para ocultar
+        const myHistoryIds = history
+            .filter(p => p.doctorName === dentist.name)
+            .map(p => p.id);
 
-            hidden = [...new Set([...hidden, ...myHistoryIds])];
-            localStorage.setItem(hiddenKey, JSON.stringify(hidden));
-            
-            loadPatientHistory();
-            alert('Histórico ocultado com sucesso!');
-        }
+        // Armazena IDs ocultos para este dentista
+        const hiddenKey = `hidden-history-${dentist.name}`;
+        const hidden = await loadData(hiddenKey) || [];
+        const updatedHidden = [...new Set([...hidden, ...myHistoryIds])];
+        await saveData(hiddenKey, updatedHidden);
+        
+        await loadPatientHistory();
+
+        // Mostrar mensagem de sucesso no próprio modal
+        const modalContent = document.getElementById('delete-modal-content');
+        const modalTitle = document.getElementById('delete-modal-title');
+        const modalMessage = document.getElementById('delete-modal-message');
+        const modalSubmessage = document.getElementById('delete-modal-submessage');
+        const modalButtons = document.getElementById('delete-modal-buttons');
+
+        modalTitle.textContent = '✓ Histórico Ocultado';
+        modalTitle.style.color = '#4CAF50';
+        modalMessage.textContent = 'Seu histórico foi ocultado com sucesso!';
+        modalSubmessage.style.display = 'none';
+        modalButtons.style.display = 'none';
+
+        // Fecha o modal após 1.5 segundos
+        setTimeout(() => {
+            deleteHistoryModal.style.display = 'none';
+            // Restaura o modal para o estado original
+            modalTitle.textContent = '⚠️ Confirmar Exclusão';
+            modalTitle.style.color = '#8B0000';
+            modalMessage.textContent = 'Deseja ocultar seu histórico de chamadas?';
+            modalSubmessage.textContent = '(O histórico continuará visível na recepção)';
+            modalSubmessage.style.display = 'block';
+            modalButtons.style.display = 'flex';
+        }, 1500);
+    });
+
+    // Cancelar exclusão do histórico
+    cancelDeleteHistoryBtn.addEventListener('click', () => {
+        deleteHistoryModal.style.display = 'none';
     });
 
     // Handlers para botões da modal
@@ -105,16 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Função para carregar pacientes aguardando para este dentista
-    function loadWaitingPatients() {
-        const raw = localStorage.getItem('patients');
-        let patients = [];
-        
-        if (raw) {
-            try {
-                patients = JSON.parse(raw);
-            } catch (e) {
-                console.error('Erro ao carregar pacientes:', e);
-            }
+    async function loadWaitingPatients(patients) {
+        if (!patients) {
+            patients = await loadData('pending-patients') || [];
         }
 
         // Filtra pacientes para este dentista
@@ -161,33 +175,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Função para carregar histórico de pacientes chamados
-    function loadPatientHistory() {
-        const rawHistory = localStorage.getItem('patients-history');
-        let history = [];
-        
-        if (rawHistory) {
-            try {
-                history = JSON.parse(rawHistory);
-            } catch (e) {
-                console.error('Erro ao carregar histórico:', e);
-            }
+    async function loadPatientHistory(history) {
+        if (!history) {
+            history = await loadData('call-history') || [];
         }
 
         // Carrega IDs ocultos para este dentista
         const hiddenKey = `hidden-history-${dentist.name}`;
-        const rawHidden = localStorage.getItem(hiddenKey);
-        let hidden = [];
-        if (rawHidden) {
-            try {
-                hidden = JSON.parse(rawHidden);
-            } catch (e) {
-                hidden = [];
-            }
-        }
+        const hidden = await loadData(hiddenKey) || [];
 
         // Filtra histórico deste dentista e remove entradas ocultas
         const myHistory = history
-            .filter(p => p.doctor === dentist.name)
+            .filter(p => p.doctorName === dentist.name)
             .filter(p => !hidden.includes(p.id));
 
         // Ordena por data mais recente primeiro
@@ -206,14 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
             div.style.padding = '8px';
             div.style.backgroundColor = '#f0f0f0';
             div.style.borderRadius = '4px';
-            
-            const serviceName = patient.service === 'Outro' 
-                ? patient.otherServiceDetail 
-                : patient.service;
 
             div.innerHTML = `
-                <strong>${patient.name}</strong><br>
-                Serviço: ${serviceName}<br>
+                <strong>${patient.patientName}</strong><br>
+                Consultório: ${patient.consultorio}<br>
                 <small>Chamado em: ${formatDateTime(patient.timestamp)}</small>
             `;
 
@@ -222,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Função para chamar paciente
-    function callPatient(patient) {
+    async function callPatient(patient) {
         currentPatientForModal = patient;
         
         // Preenche a modal com informações do paciente
@@ -232,17 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : patient.service;
         modalPatientInfo.textContent = `Serviço: ${serviceName}`;
         
-        // Registra chamada no painel de chamadas
-        const rawCalls = localStorage.getItem('call-notifications');
-        let calls = [];
-        if (rawCalls) {
-            try {
-                calls = JSON.parse(rawCalls);
-            } catch (e) {
-                calls = [];
-            }
-        }
-
+        // Registra chamada no painel de chamadas (call-notifications)
         const callNotification = {
             id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             patientName: patient.name,
@@ -253,59 +238,48 @@ document.addEventListener('DOMContentLoaded', () => {
             timestamp: new Date().toISOString()
         };
 
-        calls.push(callNotification);
-        localStorage.setItem('call-notifications', JSON.stringify(calls));
+        await unshiftToArray('call-notifications', callNotification);
 
         // Exibe a modal
         callModal.style.display = 'flex';
     }
 
-    window.callPatient = callPatient;
-
     // Função para confirmar que o paciente saiu
-    function confirmPatientDone(patient) {
+    async function confirmPatientDone(patient) {
         // Remove paciente da lista de espera
-        const raw = localStorage.getItem('patients');
-        let patients = JSON.parse(raw);
-        const patientIndex = patients.findIndex(p => p.name === patient.name && p.doctor === patient.doctor && p.service === patient.service);
-        if (patientIndex !== -1) {
-            patients.splice(patientIndex, 1);
-            localStorage.setItem('patients', JSON.stringify(patients));
-        }
+        await removeFromArray('pending-patients', (p) => 
+            !(p.name === patient.name && p.doctor === patient.doctor && p.service === patient.service)
+        );
 
         // Adiciona ao histórico com data e hora
-        const rawHistory = localStorage.getItem('patients-history');
-        let history = [];
-        if (rawHistory) {
-            try {
-                history = JSON.parse(rawHistory);
-            } catch (e) {
-                history = [];
-            }
-        }
-
         const historyEntry = {
             id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            ...patient,
+            patientName: patient.name,
+            doctorName: dentist.name,
+            consultorio: dentist.consultorio,
+            service: patient.service,
+            otherServiceDetail: patient.otherServiceDetail || '',
             timestamp: new Date().toISOString()
         };
-        history.push(historyEntry);
-        localStorage.setItem('patients-history', JSON.stringify(history));
+        await unshiftToArray('call-history', historyEntry);
 
         // Recarrega as listas
-        loadWaitingPatients();
-        loadPatientHistory();
+        await loadWaitingPatients();
+        await loadPatientHistory();
         
         currentPatientForModal = null;
-    };
+    }
+
+    // Configura listeners em tempo real
+    await onDataChange('pending-patients', (patients) => {
+        loadWaitingPatients(patients);
+    });
+
+    await onDataChange('call-history', (history) => {
+        loadPatientHistory(history);
+    });
 
     // Carrega dados iniciais
-    loadWaitingPatients();
-    loadPatientHistory();
-    
-    // Recarrega pacientes a cada 2 segundos (para atualizar em tempo real)
-    setInterval(() => {
-        loadWaitingPatients();
-        loadPatientHistory();
-    }, 2000);
+    await loadWaitingPatients();
+    await loadPatientHistory();
 });

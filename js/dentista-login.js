@@ -1,5 +1,7 @@
-// Script para login do dentista
-document.addEventListener('DOMContentLoaded', () => {
+// Script para login do dentista - com suporte Firebase/localStorage
+import { saveData, loadData } from './backend-helper.js';
+
+document.addEventListener('DOMContentLoaded', async () => {
     const form = document.querySelector('.dentist-login-form');
     const dentistSelect = document.getElementById('dentist-select');
     const otherDentistGroup = document.getElementById('other-dentist-group');
@@ -9,17 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fixedDoctors = ['Dra. Jessica Reis', 'Dra. Dani'];
 
-    function loadDoctorsIntoSelect() {
+    async function loadDoctorsIntoSelect() {
         if (!dentistSelect) return;
-        const raw = localStorage.getItem('doctors');
-        let dynamicDoctors = [];
-        if (raw) {
-            try {
-                dynamicDoctors = JSON.parse(raw);
-            } catch (e) {
-                dynamicDoctors = [];
-            }
-        }
+        
+        // Carrega dentistas dinâmicos do Firebase/localStorage
+        const dynamicDoctors = await loadData('doctors') || [];
 
         const allDoctors = [...new Set([...fixedDoctors, ...dynamicDoctors])];
         const currentValue = dentistSelect.value;
@@ -44,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (!form) return;
 
-    loadDoctorsIntoSelect();
+    await loadDoctorsIntoSelect();
 
     // Mostra/oculta campo de nome customizado
     dentistSelect.addEventListener('change', () => {
@@ -100,26 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Adiciona dentista à lista de dentistas disponíveis
-        const rawDoctors = localStorage.getItem('doctors');
-        let doctors = [];
-        if (rawDoctors) {
-            try {
-                doctors = JSON.parse(rawDoctors);
-            } catch (e) {
-                doctors = [];
-            }
-        }
+        // Adiciona dentista à lista de dentistas disponíveis (Firebase)
+        const doctors = await loadData('doctors') || [];
 
         // Verifica se dentista já está na lista
         if (!doctors.includes(name)) {
             doctors.push(name);
-            localStorage.setItem('doctors', JSON.stringify(doctors));
-            loadDoctorsIntoSelect();
+            await saveData('doctors', doctors);
+            await loadDoctorsIntoSelect();
             dentistSelect.value = name;
         }
 
-        // Salva dados do dentista logado
+        // Salva dados do dentista logado (apenas em localStorage, pois é sessão local)
         const dentist = { name, consultorio };
         localStorage.setItem('dentist', JSON.stringify(dentist));
         

@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         patients.forEach(patient => {
             const div = document.createElement('div');
-            div.className = 'patient-card';
+            div.className = 'patient-item';
 
             const badge = patient.urgente ? '<span class="urgent-badge">URGENTE</span>' : '';
 
@@ -149,8 +149,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p><strong>Serviço:</strong> ${patient.service}${patient.otherServiceDetail ? ' - ' + patient.otherServiceDetail : ''}</p>
                 </div>
                 <div class="patient-actions">
-                    <button class="call-btn" data-patient='${JSON.stringify(patient)}'>Chamar</button>
-                    <button class="remove-btn" data-name="${patient.name}">Remover</button>
+                    <button class="patient-button" data-patient='${JSON.stringify(patient)}'>Chamar</button>
+                    <button class="patient-button" data-name="${patient.name}" style="background-color: #666;">Remover</button>
                 </div>
             `;
 
@@ -158,22 +158,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Eventos dos botões
-        document.querySelectorAll('.call-btn').forEach(btn => {
+        document.querySelectorAll('.patient-button').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const patient = JSON.parse(e.target.dataset.patient);
-                const confirmed = await showConfirm(`Chamar ${patient.name}?`);
-                if (confirmed) {
-                    await callPatient(patient);
-                }
-            });
-        });
-
-        document.querySelectorAll('.remove-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+                const patientData = e.target.dataset.patient;
                 const name = e.target.dataset.name;
-                const confirmed = await showConfirm(`Remover ${name}?`);
-                if (confirmed) {
-                    await removeFromArray('pending-patients', p => p.name !== name);
+                
+                if (patientData) {
+                    // Botão Chamar
+                    const patient = JSON.parse(patientData);
+                    const confirmed = await showConfirm(`Chamar ${patient.name}?`);
+                    if (confirmed) {
+                        await callPatient(patient);
+                    }
+                } else if (name) {
+                    // Botão Remover
+                    const confirmed = await showConfirm(`Remover ${name}?`);
+                    if (confirmed) {
+                        await removeFromArray('pending-patients', p => p.name !== name);
+                    }
                 }
             });
         });
@@ -268,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         history.forEach(call => {
             const div = document.createElement('div');
-            div.className = 'patient-card';
+            div.className = 'patient-item';
 
             const date = new Date(call.timestamp);
             const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -298,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Inicializa com dados atuais
-    loadDoctorsList();
-    loadPatientsList();
-    loadHistoryList();
+    await loadDoctorsList();
+    await loadPatientsList();
+    await loadHistoryList();
 });

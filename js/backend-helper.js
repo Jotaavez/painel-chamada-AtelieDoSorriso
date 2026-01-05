@@ -10,6 +10,7 @@ let update = null;
 let remove = null;
 let onValue = null;
 let runTransaction = null;
+let initPromise = null;
 
 // Tenta carregar Firebase
 async function initializeBackend() {
@@ -31,8 +32,17 @@ async function initializeBackend() {
     }
 }
 
+// Função auxiliar para garantir inicialização antes de usar
+async function ensureInitialized() {
+    if (!initPromise) {
+        initPromise = initializeBackend();
+    }
+    await initPromise;
+}
+
 // Salva dados
 async function saveData(key, value) {
+    await ensureInitialized();
     if (useFirebase && database && ref && set) {
         try {
             const refPath = ref(database, key);
@@ -48,6 +58,7 @@ async function saveData(key, value) {
 
 // Carrega dados
 async function loadData(key) {
+    await ensureInitialized();
     if (useFirebase && database && ref && get) {
         try {
             const snapshot = await get(ref(database, key));
@@ -65,7 +76,8 @@ async function loadData(key) {
 }
 
 // Listener em tempo real para qualquer chave
-function onDataChange(key, callback) {
+async function onDataChange(key, callback) {
+    await ensureInitialized();
     if (useFirebase && database && ref && onValue) {
         try {
             const refPath = ref(database, key);
@@ -93,6 +105,7 @@ function onCallsChange(callback) {
 
 // Adiciona item a um array de forma atômica (evita race conditions)
 async function pushToArray(key, newItem) {
+    await ensureInitialized();
     if (useFirebase && database && ref && runTransaction) {
         try {
             const refPath = ref(database, key);
@@ -116,6 +129,7 @@ async function pushToArray(key, newItem) {
 
 // Remove item de um array de forma atômica
 async function removeFromArray(key, filterFn) {
+    await ensureInitialized();
     if (useFirebase && database && ref && runTransaction) {
         try {
             const refPath = ref(database, key);
@@ -138,6 +152,7 @@ async function removeFromArray(key, filterFn) {
 
 // Adiciona item no início de um array de forma atômica
 async function unshiftToArray(key, newItem) {
+    await ensureInitialized();
     if (useFirebase && database && ref && runTransaction) {
         try {
             const refPath = ref(database, key);
@@ -160,6 +175,6 @@ async function unshiftToArray(key, newItem) {
 }
 
 // Inicializa ao carregar
-initializeBackend();
+initPromise = initializeBackend();
 
 export { saveData, loadData, onDataChange, onCallsChange, pushToArray, removeFromArray, unshiftToArray, useFirebase };
