@@ -91,6 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function playNotificationSound() {
         try {
             console.log('📢 Iniciando notificação sonora...');
+            console.log('  Status de desbloqueio:', audioUnlocked);
             
             // Muta o vídeo durante o toque
             if (callVideo) {
@@ -121,6 +122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         playPromise
                             .then(() => {
                                 console.log('✓ Arquivo de áudio tocando com sucesso');
+                                audioUnlocked = true;
                                 
                                 // Volta o vídeo ao normal após terminar
                                 const audioDuration = notificationSound.duration || 1.5;
@@ -133,11 +135,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                             })
                             .catch((error) => {
                                 console.warn('⚠️ Erro ao reproduzir arquivo:', error.message);
-                                console.log('↪️ Caindo para Web Audio API...');
-                                playWebAudioBeeps();
+                                console.log('  Detalhes:', error.code, error.name);
+                                
+                                // Se não foi desbloqueado, aguarda e tenta novamente
+                                if (!audioUnlocked && error.name === 'NotAllowedError') {
+                                    console.log('↪️ Áudio não desbloqueado ainda, tentando Web Audio...');
+                                    playWebAudioBeeps();
+                                } else {
+                                    console.log('↪️ Caindo para Web Audio API...');
+                                    playWebAudioBeeps();
+                                }
                             });
                         
-                        return; // Sucesso ou tentando!
+                        return;
                     } else {
                         console.warn('⚠️ playPromise não retornou promise');
                         console.log('↪️ Caindo para Web Audio API...');
@@ -178,14 +188,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // Garante que o audioContext está ativo
             if (audioContext.state === 'suspended') {
-                console.log('⏸️ AudioContext suspendido, resumindo...');
+                console.log('⏸️ AudioContext suspendido, tentando resumir...');
                 try {
                     await audioContext.resume();
-                    console.log('✓ AudioContext retomado');
+                    console.log('✓ AudioContext retomado com sucesso');
+                    audioUnlocked = true;
                 } catch (e) {
                     console.error('❌ Erro ao resumir AudioContext:', e.message);
-                    return;
+                    console.log('  Isso significa que o usuário ainda não interagiu com a página');
+                    // Não retorna, tenta mesmo assim
                 }
+            } else {
+                audioUnlocked = true;
+                console.log('✓ AudioContext já estava ativo');
             }
             
             // Padrão simples e robusto: 2 beeps em frequência média
@@ -234,10 +249,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    let audioUnlocked = false; // Flag para rastrear se áudio foi desbloqueado
+
     // Função para desbloquear áudio ao primeiro clique do usuário (necessário em alguns navegadores)
     function unlockAudio() {
         const unlock = () => {
-            console.log('🔓 Desbloqueando áudio...');
+            console.log('🔓 Desbloqueando áudio após interação do usuário...');
             
             // Tenta desbloquear com o arquivo de áudio
             if (notificationSound) {
@@ -245,9 +262,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 notificationSound.play().then(() => {
                     notificationSound.pause();
                     notificationSound.currentTime = 0;
-                    console.log('✓ Áudio (arquivo) desbloqueado');
+                    audioUnlocked = true;
+                    console.log('✓ Áudio (arquivo) desbloqueado com sucesso');
                 }).catch(err => {
-                    console.warn('⚠️ Erro ao desbloquear áudio:', err.message);
+                    console.warn('⚠️ Erro ao desbloquear áudio (arquivo):', err.message);
                 });
             }
             
@@ -256,11 +274,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 if (audioContext.state === 'suspended') {
                     audioContext.resume().then(() => {
-                        console.log('✓ AudioContext desbloqueado');
+                        audioUnlocked = true;
+                        console.log('✓ AudioContext desbloqueado com sucesso');
+                    }).catch(err => {
+                        console.warn('⚠️ Erro ao desbloquear AudioContext:', err.message);
                     });
+                } else {
+                    audioUnlocked = true;
+                    console.log('✓ AudioContext já estava ativo');
                 }
             } catch (e) {
-                console.log('ℹ️ AudioContext não disponível ainda');
+                console.warn('⚠️ Erro ao criar AudioContext:', e.message);
             }
             
             document.removeEventListener('click', unlock);
@@ -269,6 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         document.addEventListener('click', unlock);
         document.addEventListener('touchstart', unlock);
+        console.log('👂 Aguardando interação do usuário para desbloquear áudio...');
     }
 
     // Função para carregar chamadas recentes (apenas a anterior)
