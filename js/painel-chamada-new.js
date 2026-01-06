@@ -30,7 +30,7 @@ function unlockAudio() {
 
 // Função auxiliar: gera beeps com Web Audio API (fallback)
 function playWebAudioBeeps() {
-    console.log('🎼 Usando Web Audio API...');
+    console.log('🎼 Reproduzindo beep clínico...');
     
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -39,28 +39,33 @@ function playWebAudioBeeps() {
             audioContext.resume();
         }
         
-        // 2 beeps simples em 650Hz
-        const playBeep = (delay) => {
+        // Padrão clínico profissional: 2 beeps em 600Hz
+        // 600Hz é a frequência padrão de sistemas médicos e hospitalares
+        const playBeep = (delay, duration = 0.2) => {
             const osc = audioContext.createOscillator();
             const gain = audioContext.createGain();
             
-            osc.frequency.value = 650;
+            osc.frequency.value = 600; // Frequência clínica profissional
             osc.type = 'sine';
-            gain.gain.setValueAtTime(1, audioContext.currentTime + delay);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + delay + 0.18);
+            
+            // Envelope suave: ataque 0, sustain, decay exponencial
+            const now = audioContext.currentTime + delay;
+            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
             
             osc.connect(gain);
             gain.connect(audioContext.destination);
-            osc.start(audioContext.currentTime + delay);
-            osc.stop(audioContext.currentTime + delay + 0.18);
+            osc.start(now);
+            osc.stop(now + duration);
         };
         
-        playBeep(0);     // Beep 1
-        playBeep(0.25);  // Beep 2
+        // Padrão: 2 beeps com 150ms de intervalo
+        playBeep(0, 0.2);      // Beep 1
+        playBeep(0.35, 0.2);   // Beep 2
         
-        console.log('✓ Beeps gerados');
+        console.log('✓ Som clínico gerado (600Hz, 2 beeps)');
     } catch (e) {
-        console.error('❌ Web Audio falhou:', e.message);
+        console.error('❌ Erro ao gerar som:', e.message);
     }
 }
 
@@ -148,27 +153,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Função para tocar som de notificação
     function playNotificationSound() {
         console.log('🔊 Tocando notificação...');
-        
-        if (!notificationSound) {
-            console.warn('⚠️ Elemento de áudio não encontrado, usando Web Audio');
-            playWebAudioBeeps();
-            return;
-        }
-        
-        // Reseta e toca o áudio
-        notificationSound.currentTime = 0;
-        notificationSound.volume = 1.0;
-        
-        const playPromise = notificationSound.play();
-        
-        if (playPromise !== undefined) {
-            playPromise
-                .then(() => console.log('✓ Som tocando'))
-                .catch(err => {
-                    console.warn('⚠️ Arquivo não tocou:', err.message);
-                    playWebAudioBeeps();
-                });
-        }
+        playWebAudioBeeps(); // Usa Web Audio direto (mais confiável em TV)
     }
     
     // Função auxiliar: gera beeps com Web Audio API (fallback)
