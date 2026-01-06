@@ -1,0 +1,45 @@
+# Configuração Netlify para o Painel de Chamada
+
+[build]
+  publish = "."
+  command = ""
+
+# Redireciona URLs sem extensão para .html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  condition = {Status = "404"}
+
+# Configurações de headers para cache e CORS
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "text/css"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+    Content-Type = "application/javascript"
+    Access-Control-Allow-Origin = "*"
+
+[[headers]]
+  for = "/assets/sounds/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+    Access-Control-Allow-Origin = "*"
