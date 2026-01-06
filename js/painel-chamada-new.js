@@ -138,8 +138,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalDoctorValue.textContent = call.doctorName;
         callModalAlert.style.display = 'flex';
         
-        // Toca o som IMEDIATAMENTE (sem delay)
-        playNotificationSound();
+        // Aguarda o modal renderizar antes de tocar o som (importante na TV)
+        setTimeout(() => {
+            playNotificationSound();
+        }, 300);
         
         // Limpa timeout anterior se existir
         if (modalTimeout) {
