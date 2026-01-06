@@ -89,10 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 callVideo.style.opacity = '0.5';
             }
             
-            // Usa Web Audio API para gerar um beep MUITO simples
+            // Usa Web Audio API para gerar um beep CLÍNICO E SOFISTICADO
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            // Cria beeps mais longos e mais altos
+            // Cria beeps em frequências mais baixas e sofisticadas
             const beep = (frequency, duration, delay, volume = 0.5) => {
                 setTimeout(() => {
                     try {
@@ -116,21 +116,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }, delay);
             };
             
-            // Padrão de som mais chamativo: 4 beeps em 2 frequências
-            // Beeps com intervalos maiores para TV processar melhor
-            beep(1000, 0.25, 0, 2.5);
-            beep(1200, 0.25, 320, 2.5);
-            beep(1000, 0.25, 640, 2.5);
-            beep(1200, 0.25, 960, 2.5);
+            // Padrão de som clínico e sofisticado: 3 beeps em frequências mais baixas
+            // Beep 1: 600Hz (tom baixo, profissional)
+            beep(600, 0.2, 0, 1.8);
+            // Pausa
+            // Beep 2: 750Hz (tom médio-baixo)
+            beep(750, 0.2, 300, 1.8);
+            // Pausa
+            // Beep 3: 600Hz (volta ao tom inicial para simetria)
+            beep(600, 0.2, 600, 1.8);
             
-            console.log('✓ Notificação sonora ativada (duração: ~1.4s)');
+            console.log('✓ Notificação sonora ativada (duração: ~1s, tom clínico)');
             
             // Volta o vídeo ao normal após o toque terminar
             setTimeout(() => {
                 if (callVideo) {
                     callVideo.style.opacity = '1';
                 }
-            }, 1500);
+            }, 1000);
             
         } catch (e) {
             console.log('⚠️ Não conseguiu tocar som:', e.message);
