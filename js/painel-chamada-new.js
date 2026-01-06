@@ -30,7 +30,7 @@ function unlockAudio() {
 
 // Função auxiliar: gera beeps com Web Audio API (fallback)
 function playWebAudioBeeps() {
-    console.log('🎼 Reproduzindo beep clínico...');
+    console.log('🎼 Reproduzindo toque clínico...');
     
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -39,18 +39,18 @@ function playWebAudioBeeps() {
             audioContext.resume();
         }
         
-        // Padrão clínico profissional: 2 beeps em 600Hz
-        // 600Hz é a frequência padrão de sistemas médicos e hospitalares
-        const playBeep = (delay, duration = 0.2) => {
+        // Padrão "tiiiiin doooon" - profissional e elegante
+        const playTone = (frequency, delay, duration, volume = 0.7) => {
             const osc = audioContext.createOscillator();
             const gain = audioContext.createGain();
             
-            osc.frequency.value = 600; // Frequência clínica profissional
+            osc.frequency.value = frequency;
             osc.type = 'sine';
             
-            // Envelope suave: ataque 0, sustain, decay exponencial
+            // Envelope suave: ataque rápido, sustain, decay exponencial
             const now = audioContext.currentTime + delay;
-            gain.gain.setValueAtTime(0.8, now);
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(volume, now + 0.05); // Ataque suave
             gain.gain.exponentialRampToValueAtTime(0.01, now + duration);
             
             osc.connect(gain);
@@ -59,11 +59,13 @@ function playWebAudioBeeps() {
             osc.stop(now + duration);
         };
         
-        // Padrão: 2 beeps com 150ms de intervalo
-        playBeep(0, 0.2);      // Beep 1
-        playBeep(0.35, 0.2);   // Beep 2
+        // "Tiiiiin" - tom agudo e prolongado
+        playTone(850, 0, 0.5, 0.7);
         
-        console.log('✓ Som clínico gerado (600Hz, 2 beeps)');
+        // "Doooon" - tom grave e prolongado
+        playTone(450, 0.55, 0.6, 0.8);
+        
+        console.log('✓ Toque "tiiiiin doooon" gerado (850Hz → 450Hz)');
     } catch (e) {
         console.error('❌ Erro ao gerar som:', e.message);
     }
