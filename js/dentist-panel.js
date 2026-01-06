@@ -116,19 +116,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     modalRecallBtn.addEventListener('click', async () => {
+        console.log('🔄 Botão Chamar Novamente clicado');
+        console.log('currentPatientForModal:', currentPatientForModal);
+        
         if (currentPatientForModal) {
-            // Registra nova chamada no painel de chamadas
-            const callNotification = {
-                id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                patientName: currentPatientForModal.patientName,
-                doctorName: dentist.name,
-                consultorio: dentist.consultorio,
-                service: currentPatientForModal.service || '',
-                otherServiceDetail: currentPatientForModal.otherServiceDetail || '',
-                timestamp: new Date().toISOString()
-            };
-            await unshiftToArray('call-notifications', callNotification);
-            // Não fecha a modal - mantém aberta para chamar novamente se necessário
+            try {
+                // Registra nova chamada no painel de chamadas
+                const callNotification = {
+                    id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    patientName: currentPatientForModal.name || currentPatientForModal.patientName,
+                    doctorName: dentist.name,
+                    consultorio: dentist.consultorio,
+                    service: currentPatientForModal.service || '',
+                    otherServiceDetail: currentPatientForModal.otherServiceDetail || '',
+                    timestamp: new Date().toISOString()
+                };
+                
+                console.log('📢 Chamando novamente:', callNotification);
+                await unshiftToArray('call-notifications', callNotification);
+                console.log('✓ Chamada registrada com sucesso');
+                
+                // Não fecha a modal - mantém aberta para chamar novamente se necessário
+            } catch (error) {
+                console.error('❌ Erro ao chamar novamente:', error);
+            }
+        } else {
+            console.warn('⚠️ Nenhum paciente selecionado para recall');
         }
     });
 
@@ -243,7 +256,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Função para chamar paciente
     async function callPatient(patient) {
-        currentPatientForModal = patient;
+        console.log('📋 Paciente chamado:', patient);
+        currentPatientForModal = patient; // Armazena os dados completos do paciente
         
         // Preenche a modal com informações do paciente
         modalPatientName.textContent = patient.name;
@@ -263,6 +277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             timestamp: new Date().toISOString()
         };
 
+        console.log('📢 Enviando chamada:', callNotification);
         await unshiftToArray('call-notifications', callNotification);
 
         // Exibe a modal
@@ -271,7 +286,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Função para exibir modal com paciente do histórico
     function showCallModal(patient) {
-        currentPatientForModal = patient;
+        console.log('📜 Paciente do histórico selecionado:', patient);
+        currentPatientForModal = patient; // Armazena para possível recall
         modalPatientName.textContent = patient.patientName;
         modalPatientInfo.textContent = `Consultório: ${patient.consultorio}`;
         callModal.style.display = 'flex';
