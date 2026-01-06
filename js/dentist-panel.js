@@ -121,10 +121,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (currentPatientForModal) {
             try {
+                // Usa os dados normalizados do paciente
+                const patientName = currentPatientForModal.name || currentPatientForModal.patientName;
+                
                 // Registra nova chamada no painel de chamadas
                 const callNotification = {
                     id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                    patientName: currentPatientForModal.name || currentPatientForModal.patientName,
+                    patientName: patientName,
                     doctorName: dentist.name,
                     consultorio: dentist.consultorio,
                     service: currentPatientForModal.service || '',
@@ -257,23 +260,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Função para chamar paciente
     async function callPatient(patient) {
         console.log('📋 Paciente chamado:', patient);
-        currentPatientForModal = patient; // Armazena os dados completos do paciente
+        
+        // Normaliza os dados para ter tanto 'name' quanto 'patientName'
+        const normalizedPatient = {
+            ...patient,
+            name: patient.name || patient.patientName,
+            patientName: patient.patientName || patient.name,
+            doctor: patient.doctor || dentist.name,
+            consultorio: patient.consultorio || dentist.consultorio
+        };
+        
+        currentPatientForModal = normalizedPatient; // Armazena os dados completos e normalizados
         
         // Preenche a modal com informações do paciente
-        modalPatientName.textContent = patient.name;
-        const serviceName = patient.service === 'Outro' 
-            ? patient.otherServiceDetail 
-            : patient.service;
+        modalPatientName.textContent = normalizedPatient.name || normalizedPatient.patientName;
+        const serviceName = normalizedPatient.service === 'Outro' 
+            ? normalizedPatient.otherServiceDetail 
+            : normalizedPatient.service;
         modalPatientInfo.textContent = `Serviço: ${serviceName}`;
         
         // Registra chamada no painel de chamadas (call-notifications)
         const callNotification = {
             id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            patientName: patient.name,
+            patientName: normalizedPatient.name || normalizedPatient.patientName,
             doctorName: dentist.name,
             consultorio: dentist.consultorio,
-            service: patient.service,
-            otherServiceDetail: patient.otherServiceDetail || '',
+            service: normalizedPatient.service || '',
+            otherServiceDetail: normalizedPatient.otherServiceDetail || '',
             timestamp: new Date().toISOString()
         };
 
@@ -295,18 +308,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Função para confirmar que o paciente saiu
     async function confirmPatientDone(patient) {
+        const patientName = patient.name || patient.patientName;
+        const patientService = patient.service;
+        const patientDoctor = patient.doctor || dentist.name;
+        
         // Remove paciente da lista de espera
         await removeFromArray('pending-patients', (p) => 
-            !(p.name === patient.name && p.doctor === patient.doctor && p.service === patient.service)
+            !(p.name === patientName && p.doctor === patientDoctor && p.service === patientService)
         );
 
         // Adiciona ao histórico com data e hora
         const historyEntry = {
             id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            patientName: patient.name,
+            patientName: patientName,
             doctorName: dentist.name,
             consultorio: dentist.consultorio,
-            service: patient.service,
+            service: patientService || '',
             otherServiceDetail: patient.otherServiceDetail || '',
             timestamp: new Date().toISOString()
         };
