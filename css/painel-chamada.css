@@ -237,6 +237,19 @@ body {
     padding-top: 6px;
 }
 
+.call-logo .brand-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.call-handle {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #8B0000;
+    letter-spacing: 0.4px;
+}
+
 .call-logo img {
     width: 72px;
     height: 72px;
@@ -272,5 +285,15 @@ body {
     .call-consultorio,
     .call-doctor {
         font-size: 1.1rem;
+    }
+
+    .call-handle {
+        font-size: 1rem;
+    }
+}
+
+@media (min-width: 1300px) {
+    .call-handle {
+        font-size: 1.6rem;
     }
 }

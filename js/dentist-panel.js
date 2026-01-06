@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalPatientInfo = document.getElementById('modal-patient-info');
     const modalYesBtn = document.getElementById('modal-yes-btn');
     const modalNoBtn = document.getElementById('modal-no-btn');
+    const modalRecallBtn = document.getElementById('modal-recall-btn');
 
     // Elementos do modal de confirmação de exclusão
     const deleteHistoryModal = document.getElementById('delete-history-modal');
@@ -112,6 +113,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     modalNoBtn.addEventListener('click', () => {
         callModal.style.display = 'none';
         currentPatientForModal = null;
+    });
+
+    modalRecallBtn.addEventListener('click', async () => {
+        if (currentPatientForModal) {
+            // Registra nova chamada no painel de chamadas
+            const callNotification = {
+                id: `call-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                patientName: currentPatientForModal.patientName,
+                doctorName: dentist.name,
+                consultorio: dentist.consultorio,
+                service: currentPatientForModal.service || '',
+                otherServiceDetail: currentPatientForModal.otherServiceDetail || '',
+                timestamp: new Date().toISOString()
+            };
+            await unshiftToArray('call-notifications', callNotification);
+            // Não fecha a modal - mantém aberta para chamar novamente se necessário
+        }
     });
 
     // Função para formatar data e hora
@@ -212,6 +230,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <small>Chamado em: ${formatDateTime(patient.timestamp)}</small>
             `;
 
+            // Adiciona event listener para abrir a modal quando clica no histórico
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', () => {
+                // Abre modal com o paciente do histórico
+                showCallModal(patient);
+            });
+
             patientsHistoryDiv.appendChild(div);
         });
     }
@@ -241,6 +266,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         await unshiftToArray('call-notifications', callNotification);
 
         // Exibe a modal
+        callModal.style.display = 'flex';
+    }
+
+    // Função para exibir modal com paciente do histórico
+    function showCallModal(patient) {
+        currentPatientForModal = patient;
+        modalPatientName.textContent = patient.patientName;
+        modalPatientInfo.textContent = `Consultório: ${patient.consultorio}`;
         callModal.style.display = 'flex';
     }
 

@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         try {
+            // Remove muted para permitir som
+            notificationSound.muted = false;
             notificationSound.volume = 1.0;
             notificationSound.currentTime = 0;
             
@@ -69,16 +71,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     })
                     .catch(error => {
                         console.log('✗ Erro ao tocar:', error.message);
+                        // Tenta novamente após um breve delay
                         setTimeout(() => {
+                            notificationSound.muted = false;
+                            notificationSound.currentTime = 0;
                             notificationSound.play()
                                 .then(() => console.log('✓ Som tocando (tentativa 2)'))
                                 .catch(e => {
                                     console.log('✗ Tentativa 2 falhou:', e.message);
-                                    setTimeout(() => {
-                                        notificationSound.play()
-                                            .then(() => console.log('✓ Som tocando (tentativa 3)'))
-                                            .catch(e3 => console.log('✗ Tentativa 3 falhou:', e3.message));
-                                    }, 500);
                                 });
                         }, 200);
                     });

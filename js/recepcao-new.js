@@ -271,6 +271,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         history.forEach(call => {
             const div = document.createElement('div');
             div.className = 'patient-item';
+            div.style.cursor = 'pointer';
 
             const date = new Date(call.timestamp);
             const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
@@ -286,8 +287,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
 
+            // Adiciona clique para mostrar modal com detalhes
+            div.addEventListener('click', () => {
+                showHistoryModal(call, time);
+            });
+
             historyList.appendChild(div);
         });
+    }
+
+    // Mostra modal com detalhes do histórico
+    function showHistoryModal(call, time) {
+        if (!confirmModal) return;
+        
+        const service = call.service || 'Não especificado';
+        const detail = call.otherServiceDetail ? ` - ${call.otherServiceDetail}` : '';
+        
+        confirmMessage.innerHTML = `
+            <div style="text-align: left;">
+                <p><strong>Paciente:</strong> ${call.patientName}</p>
+                <p><strong>Consultório:</strong> ${call.consultorio}</p>
+                <p><strong>Dr(a):</strong> ${call.doctorName}</p>
+                <p><strong>Serviço:</strong> ${service}${detail}</p>
+                <p><strong>Hora da Chamada:</strong> ${time}</p>
+            </div>
+        `;
+        
+        confirmModal.classList.add('active');
+        const confirmYesLocal = confirmModal.querySelector('#confirm-yes');
+        const confirmNoLocal = confirmModal.querySelector('#confirm-no');
+        
+        if (confirmNoLocal) {
+            confirmNoLocal.style.display = 'none';
+        }
+        
+        if (confirmYesLocal) {
+            confirmYesLocal.textContent = 'Fechar';
+            confirmYesLocal.onclick = () => {
+                confirmModal.classList.remove('active');
+                if (confirmNoLocal) {
+                    confirmNoLocal.style.display = '';
+                }
+                confirmYesLocal.textContent = 'Sim';
+            };
+        }
     }
 
     // Configura listeners em tempo real
