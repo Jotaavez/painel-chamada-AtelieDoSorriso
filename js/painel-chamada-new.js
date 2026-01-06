@@ -59,11 +59,11 @@ function playWebAudioBeeps() {
             osc.stop(now + duration);
         };
         
-        // "Tiiiiin" - tom agudo e prolongado
-        playTone(850, 0, 2, 2);
+        // "Tiiiiin" - tom agudo e prolongado (850Hz por 0.8s)
+        playTone(850, 0, 0.8, 0.7);
         
-        // "Doooon" - tom grave e prolongado
-        playTone(450, 0.55, 2, 2);
+        // "Doooon" - tom grave e prolongado (450Hz por 1.0s)
+        playTone(450, 0.9, 1.0, 0.8);
         
         console.log('✓ Toque "tiiiiin doooon" gerado (850Hz → 450Hz)');
     } catch (e) {
