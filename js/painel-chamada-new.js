@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 8000);
     }
 
-    // Função para tocar som - SIMPLES E UNIVERSAL
+    // Função para tocar som - CLÍNICO E OTIMIZADO PARA TV
     async function playNotificationSound() {
         try {
             console.log('Tocando notificação...');
@@ -89,11 +89,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 callVideo.style.opacity = '0.5';
             }
             
-            // Usa Web Audio API para gerar um beep CLÍNICO E SOFISTICADO
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            // Usa Web Audio API para gerar um beep CLÍNICO
+            let audioContext;
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('AudioContext não disponível:', e.message);
+                // Fallback: espera um pouco e tenta novamente
+                setTimeout(() => playNotificationSound(), 500);
+                return;
+            }
             
-            // Cria beeps em frequências mais baixas e sofisticadas
-            const beep = (frequency, duration, delay, volume = 0.5) => {
+            // Garante que o audioContext está no estado 'running'
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+            
+            // Cria beeps em frequências clínicas
+            const beep = (frequency, duration, delay, volume = 1.5) => {
                 setTimeout(() => {
                     try {
                         const osc = audioContext.createOscillator();
@@ -110,64 +123,65 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         osc.start();
                         osc.stop(audioContext.currentTime + duration);
+                        
+                        console.log(`Beep: ${frequency}Hz, duração: ${(duration*1000).toFixed(0)}ms`);
                     } catch (e) {
                         console.warn('Erro ao criar beep:', e.message);
                     }
                 }, delay);
             };
             
-            // Padrão de som clínico e sofisticado: 3 beeps em frequências mais baixas
-            // Beep 1: 600Hz (tom baixo, profissional)
-            beep(600, 0.2, 0, 1.8);
-            // Pausa
-            // Beep 2: 750Hz (tom médio-baixo)
-            beep(750, 0.2, 300, 1.8);
-            // Pausa
-            // Beep 3: 600Hz (volta ao tom inicial para simetria)
-            beep(600, 0.2, 600, 1.8);
+            // Padrão de som clínico: 3 beeps em frequências baixas
+            beep(600, 0.15, 0, 1.5);      // Beep 1: 600Hz
+            beep(750, 0.15, 200, 1.5);    // Beep 2: 750Hz (pausa de 200ms)
+            beep(600, 0.15, 400, 1.5);    // Beep 3: 600Hz (pausa de 200ms)
             
-            console.log('✓ Notificação sonora ativada (duração: ~1s, tom clínico)');
+            console.log('✓ Notificação sonora iniciada');
             
             // Volta o vídeo ao normal após o toque terminar
             setTimeout(() => {
                 if (callVideo) {
                     callVideo.style.opacity = '1';
                 }
-            }, 1000);
+            }, 800);
             
         } catch (e) {
-            console.log('⚠️ Não conseguiu tocar som:', e.message);
+            console.error('❌ Erro ao tocar som:', e.message);
             // Volta o vídeo ao normal em caso de erro
             if (callVideo) {
                 callVideo.style.opacity = '1';
-            }
-            // Fallback: tenta o arquivo de áudio
-            if (notificationSound) {
-                try {
-                    notificationSound.muted = false;
-                    notificationSound.volume = 1.0;
-                    notificationSound.currentTime = 0;
-                    await notificationSound.play();
-                } catch (e2) {
-                    console.log('⚠️ Também falhou com arquivo:', e2.message);
-                }
             }
         }
     }
 
     // Função para desbloquear áudio ao primeiro clique do usuário (necessário em alguns navegadores)
     function unlockAudio() {
-        if (!notificationSound) return;
-        
         const unlock = () => {
-            notificationSound.volume = 0.001;
-            notificationSound.play().then(() => {
-                notificationSound.pause();
-                notificationSound.currentTime = 0;
-                console.log('✓ Áudio desbloqueado');
-            }).catch(() => {
-                console.log('⚠️ Ainda não conseguiu desbloquear áudio');
-            });
+            console.log('🔓 Desbloqueando áudio...');
+            
+            // Tenta desbloquear com o arquivo de áudio
+            if (notificationSound) {
+                notificationSound.volume = 0.001;
+                notificationSound.play().then(() => {
+                    notificationSound.pause();
+                    notificationSound.currentTime = 0;
+                    console.log('✓ Áudio (arquivo) desbloqueado');
+                }).catch(err => {
+                    console.warn('⚠️ Erro ao desbloquear áudio:', err.message);
+                });
+            }
+            
+            // Também desbloqueia Web Audio API
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(() => {
+                        console.log('✓ AudioContext desbloqueado');
+                    });
+                }
+            } catch (e) {
+                console.log('ℹ️ AudioContext não disponível ainda');
+            }
             
             document.removeEventListener('click', unlock);
             document.removeEventListener('touchstart', unlock);
