@@ -60,13 +60,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         
         try {
-            // Estratégia 1: Tocar normalmente
+            // Estratégia 1: Tocar o arquivo de áudio
             notificationSound.muted = false;
             notificationSound.volume = 1.0;
             notificationSound.currentTime = 0;
             
-            console.log('Tentando tocar som (Estratégia 1)...');
-            let played = false;
+            console.log('Tentando tocar som (Estratégia 1 - arquivo)...');
             
             try {
                 await notificationSound.play();
@@ -81,7 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             notificationSound.currentTime = 0;
             
             try {
-                console.log('Tentando tocar som (Estratégia 2 - após delay)...');
+                console.log('Tentando tocar som (Estratégia 2 - arquivo com delay)...');
                 await notificationSound.play();
                 console.log('✓ Som tocando com sucesso (tentativa 2)');
                 return;
@@ -89,29 +88,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log('✗ Estratégia 2 falhou:', e2.message);
             }
 
-            // Estratégia 3: Criar um novo elemento de áudio dinamicamente
+            // Estratégia 3: Usar Web Audio API para gerar som sintetizado
             try {
-                console.log('Tentando tocar som (Estratégia 3 - novo elemento)...');
-                const audioClone = notificationSound.cloneNode();
-                audioClone.play();
-                console.log('✓ Som tocando com sucesso (clone)');
+                console.log('Tentando tocar som (Estratégia 3 - Web Audio API sintetizado)...');
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Cria 3 beeps em sequência
+                const now = audioContext.currentTime;
+                const noteLength = 0.15; // 150ms por beep
+                const gap = 0.05; // 50ms entre beeps
+                
+                for (let i = 0; i < 3; i++) {
+                    const startTime = now + (i * (noteLength + gap));
+                    
+                    // Oscilador para tom agudo
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.frequency.value = 800; // Hz
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    // Envelope de volume
+                    gainNode.gain.setValueAtTime(0.3, startTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + noteLength);
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + noteLength);
+                }
+                
+                console.log('✓ Som tocando com sucesso (Web Audio)');
                 return;
             } catch (e3) {
                 console.log('✗ Estratégia 3 falhou:', e3.message);
             }
 
-            // Estratégia 4: Usar Web Audio API
+            // Estratégia 4: Tentar com arquivo clonado
             try {
-                console.log('Tentando tocar som (Estratégia 4 - Web Audio API)...');
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                const response = await fetch(notificationSound.src);
-                const arrayBuffer = await response.arrayBuffer();
-                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-                const source = audioContext.createBufferSource();
-                source.buffer = audioBuffer;
-                source.connect(audioContext.destination);
-                source.start(0);
-                console.log('✓ Som tocando com sucesso (Web Audio)');
+                console.log('Tentando tocar som (Estratégia 4 - elemento clonado)...');
+                const audioClone = notificationSound.cloneNode();
+                audioClone.volume = 1.0;
+                audioClone.muted = false;
+                await audioClone.play();
+                console.log('✓ Som tocando com sucesso (clone)');
                 return;
             } catch (e4) {
                 console.log('✗ Estratégia 4 falhou:', e4.message);
