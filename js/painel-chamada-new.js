@@ -68,6 +68,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalDoctorValue.textContent = call.doctorName;
         callModalAlert.style.display = 'flex';
         
+        console.log('📍 Modal aberto, agendando áudio após 200ms...');
+        
+        // Toca o som DEPOIS de abrir o modal (melhora performance)
+        setTimeout(() => {
+            console.log('▶️ Iniciando som após modal estar visível');
+            playNotificationSound();
+        }, 200);
+        
         // Limpa timeout anterior se existir
         if (modalTimeout) {
             clearTimeout(modalTimeout);
@@ -317,14 +325,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             lastCallId = latestCall.id;
             
-            // Toca o som
-            playNotificationSound();
-
             // Exibe a chamada
             displayCurrentCall(latestCall);
             triggerBlink();
             
-            // Mostra modal por 8 segundos
+            // Mostra modal por 8 segundos (som toca dentro dela, após 200ms)
             showCallModal(latestCall);
         }
 
