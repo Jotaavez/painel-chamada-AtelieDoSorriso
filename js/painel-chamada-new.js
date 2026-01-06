@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const notificationSound = document.getElementById('notification-sound');
     const clockEl = document.getElementById('call-clock');
     
+    // Desbloqueia áudio ao primeiro toque/clique do usuário
+    unlockAudio();
+    
     let lastCallId = null;
     let previousCall = null;
     let blinkTimeout = null;
@@ -49,43 +52,98 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3000);
     }
 
-    // Função para tocar som com múltiplas tentativas
-    function playNotificationSound() {
+    // Função para tocar som com múltiplas estratégias
+    async function playNotificationSound() {
         if (!notificationSound) {
             console.log('Elemento de áudio não encontrado');
             return;
         }
         
         try {
-            // Remove muted para permitir som
+            // Estratégia 1: Tocar normalmente
             notificationSound.muted = false;
             notificationSound.volume = 1.0;
             notificationSound.currentTime = 0;
             
-            const playPromise = notificationSound.play();
+            console.log('Tentando tocar som (Estratégia 1)...');
+            let played = false;
             
-            if (playPromise !== undefined) {
-                playPromise
-                    .then(() => {
-                        console.log('✓ Som tocando com sucesso');
-                    })
-                    .catch(error => {
-                        console.log('✗ Erro ao tocar:', error.message);
-                        // Tenta novamente após um breve delay
-                        setTimeout(() => {
-                            notificationSound.muted = false;
-                            notificationSound.currentTime = 0;
-                            notificationSound.play()
-                                .then(() => console.log('✓ Som tocando (tentativa 2)'))
-                                .catch(e => {
-                                    console.log('✗ Tentativa 2 falhou:', e.message);
-                                });
-                        }, 200);
-                    });
+            try {
+                await notificationSound.play();
+                console.log('✓ Som tocando com sucesso');
+                return;
+            } catch (e1) {
+                console.log('✗ Estratégia 1 falhou:', e1.message);
             }
+
+            // Estratégia 2: Esperar um pouco e tentar novamente
+            await new Promise(resolve => setTimeout(resolve, 300));
+            notificationSound.currentTime = 0;
+            
+            try {
+                console.log('Tentando tocar som (Estratégia 2 - após delay)...');
+                await notificationSound.play();
+                console.log('✓ Som tocando com sucesso (tentativa 2)');
+                return;
+            } catch (e2) {
+                console.log('✗ Estratégia 2 falhou:', e2.message);
+            }
+
+            // Estratégia 3: Criar um novo elemento de áudio dinamicamente
+            try {
+                console.log('Tentando tocar som (Estratégia 3 - novo elemento)...');
+                const audioClone = notificationSound.cloneNode();
+                audioClone.play();
+                console.log('✓ Som tocando com sucesso (clone)');
+                return;
+            } catch (e3) {
+                console.log('✗ Estratégia 3 falhou:', e3.message);
+            }
+
+            // Estratégia 4: Usar Web Audio API
+            try {
+                console.log('Tentando tocar som (Estratégia 4 - Web Audio API)...');
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const response = await fetch(notificationSound.src);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                source.start(0);
+                console.log('✓ Som tocando com sucesso (Web Audio)');
+                return;
+            } catch (e4) {
+                console.log('✗ Estratégia 4 falhou:', e4.message);
+            }
+            
+            console.log('⚠️ Nenhuma estratégia de áudio funcionou');
+            
         } catch (e) {
-            console.log('Erro ao tentar tocar som:', e);
+            console.log('Erro geral ao tentar tocar som:', e);
         }
+    }
+
+    // Função para desbloquear áudio ao primeiro clique do usuário (necessário em alguns navegadores)
+    function unlockAudio() {
+        if (!notificationSound) return;
+        
+        const unlock = () => {
+            notificationSound.volume = 0.001;
+            notificationSound.play().then(() => {
+                notificationSound.pause();
+                notificationSound.currentTime = 0;
+                console.log('✓ Áudio desbloqueado');
+            }).catch(() => {
+                console.log('⚠️ Ainda não conseguiu desbloquear áudio');
+            });
+            
+            document.removeEventListener('click', unlock);
+            document.removeEventListener('touchstart', unlock);
+        };
+        
+        document.addEventListener('click', unlock);
+        document.addEventListener('touchstart', unlock);
     }
 
     // Função para carregar chamadas recentes (apenas a anterior)
