@@ -235,7 +235,7 @@ body {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    padding-top: 2px;
+    padding-top: 0;
 }
 
 .call-logo .brand-wrapper {
@@ -245,7 +245,7 @@ body {
 }
 
 .call-handle {
-    font-size: 0.9rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #8B0000;
     letter-spacing: 0.3px;
