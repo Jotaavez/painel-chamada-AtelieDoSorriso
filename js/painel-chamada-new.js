@@ -79,7 +79,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 8000);
     }
 
-    // Função para tocar som - OTIMIZADO PARA TV
+    // Função para tocar som - USANDO ARQUIVO DE ÁUDIO COM FALLBACK
     async function playNotificationSound() {
         try {
             console.log('📢 Iniciando notificação sonora...');
@@ -89,7 +89,52 @@ document.addEventListener('DOMContentLoaded', async () => {
                 callVideo.style.opacity = '0.5';
             }
             
-            // Usa Web Audio API com esperas para TV processar melhor
+            // Tenta usar o arquivo de áudio primeiro (melhor qualidade na TV)
+            if (notificationSound) {
+                try {
+                    console.log('🔊 Tentando reproduzir arquivo de áudio...');
+                    notificationSound.muted = false;
+                    notificationSound.volume = 1.0;
+                    notificationSound.currentTime = 0;
+                    
+                    const playPromise = notificationSound.play();
+                    if (playPromise !== undefined) {
+                        await playPromise;
+                        console.log('✓ Arquivo de áudio tocando');
+                        
+                        // Volta o vídeo ao normal após terminar (ou após 2s máximo)
+                        setTimeout(() => {
+                            if (callVideo) {
+                                callVideo.style.opacity = '1';
+                            }
+                            console.log('✓ Vídeo restaurado');
+                        }, Math.min((notificationSound.duration || 0.5) * 1000 + 100, 2000));
+                        
+                        return; // Sucesso! Não precisa de Web Audio
+                    }
+                } catch (audioError) {
+                    console.warn('⚠️ Erro ao reproduzir arquivo:', audioError.message);
+                    console.log('↪️ Caindo para Web Audio API...');
+                }
+            }
+            
+            // Fallback: Web Audio API se arquivo falhar
+            await playWebAudioBeeps();
+            
+        } catch (e) {
+            console.error('❌ Erro geral ao tocar som:', e.message);
+            // Volta o vídeo ao normal em caso de erro
+            if (callVideo) {
+                callVideo.style.opacity = '1';
+            }
+        }
+    }
+    
+    // Função auxiliar: gera beeps com Web Audio API
+    async function playWebAudioBeeps() {
+        try {
+            console.log('🎼 Gerando beeps com Web Audio API...');
+            
             let audioContext;
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -112,7 +157,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             // Padrão simples e robusto: 2 beeps em frequência média
-            // Mais simples e estável para TV processar
             const playBeep = (freq, duration, startTime) => {
                 try {
                     const osc = audioContext.createOscillator();
@@ -143,7 +187,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             playBeep(650, 0.18, 0);      // Beep 1: imediato
             playBeep(650, 0.18, 250);    // Beep 2: após 250ms
             
-            console.log('✓ Notificação sonora agendada');
+            console.log('✓ Beeps agendados');
             
             // Volta o vídeo ao normal após os beeps terminarem
             setTimeout(() => {
@@ -154,11 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 650);
             
         } catch (e) {
-            console.error('❌ Erro geral ao tocar som:', e.message);
-            // Volta o vídeo ao normal em caso de erro
-            if (callVideo) {
-                callVideo.style.opacity = '1';
-            }
+            console.error('❌ Erro ao gerar Web Audio beeps:', e.message);
         }
     }
 
