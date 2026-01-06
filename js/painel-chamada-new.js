@@ -1,6 +1,69 @@
 // Script para o painel de chamadas - com suporte Firebase/localStorage
 import { saveData, loadData, onCallsChange } from './backend-helper.js';
 
+let audioUnlocked = false; // Flag para rastrear se áudio foi desbloqueado
+
+// Função para desbloquear áudio - chamada ao primeiro clique/toque
+function unlockAudio() {
+    const unlock = () => {
+        console.log('🔓 Desbloqueando áudio após interação do usuário...');
+        audioUnlocked = true;
+        
+        // Resume AudioContext if needed
+        try {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            console.log('✓ Áudio desbloqueado');
+        } catch (e) {
+            console.log('  AudioContext:', e.message);
+        }
+        
+        document.removeEventListener('click', unlock);
+        document.removeEventListener('touchstart', unlock);
+    };
+    
+    document.addEventListener('click', unlock, { once: true });
+    document.addEventListener('touchstart', unlock, { once: true });
+}
+
+// Função auxiliar: gera beeps com Web Audio API (fallback)
+function playWebAudioBeeps() {
+    console.log('🎼 Usando Web Audio API...');
+    
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        // 2 beeps simples em 650Hz
+        const playBeep = (delay) => {
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            
+            osc.frequency.value = 650;
+            osc.type = 'sine';
+            gain.gain.setValueAtTime(1, audioContext.currentTime + delay);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + delay + 0.18);
+            
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.start(audioContext.currentTime + delay);
+            osc.stop(audioContext.currentTime + delay + 0.18);
+        };
+        
+        playBeep(0);     // Beep 1
+        playBeep(0.25);  // Beep 2
+        
+        console.log('✓ Beeps gerados');
+    } catch (e) {
+        console.error('❌ Web Audio falhou:', e.message);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
     const patientNameEl = document.getElementById('call-patient-name');
     const consultorioEl = document.getElementById('call-consultorio');
@@ -68,13 +131,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalDoctorValue.textContent = call.doctorName;
         callModalAlert.style.display = 'flex';
         
-        console.log('📍 Modal aberto, agendando áudio após 200ms...');
-        
-        // Toca o som DEPOIS de abrir o modal (melhora performance)
-        setTimeout(() => {
-            console.log('▶️ Iniciando som após modal estar visível');
-            playNotificationSound();
-        }, 200);
+        // Toca o som IMEDIATAMENTE (sem delay)
+        playNotificationSound();
         
         // Limpa timeout anterior se existir
         if (modalTimeout) {
@@ -87,213 +145,66 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 8000);
     }
 
-    // Função para tocar som - USANDO ARQUIVO DE ÁUDIO COM FALLBACK
-    async function playNotificationSound() {
-        try {
-            console.log('📢 Iniciando notificação sonora...');
-            console.log('  Status de desbloqueio:', audioUnlocked);
-            
-            // Muta o vídeo durante o toque
-            if (callVideo) {
-                callVideo.style.opacity = '0.5';
-            }
-            
-            // Tenta usar o arquivo de áudio primeiro (melhor qualidade na TV)
-            if (notificationSound) {
-                try {
-                    console.log('🔊 Tentando reproduzir arquivo de áudio...');
-                    
-                    // Force reset do elemento
-                    notificationSound.pause();
-                    notificationSound.currentTime = 0;
-                    notificationSound.muted = false;
-                    notificationSound.volume = 1.0;
-                    
-                    // Remove atributo autoplay para permitir controle manual
-                    if (notificationSound.hasAttribute('autoplay')) {
-                        notificationSound.removeAttribute('autoplay');
-                    }
-                    
-                    console.log('  Preparando áudio (duração:', notificationSound.duration, 's)');
-                    
-                    const playPromise = notificationSound.play();
-                    
-                    if (playPromise !== undefined) {
-                        playPromise
-                            .then(() => {
-                                console.log('✓ Arquivo de áudio tocando com sucesso');
-                                audioUnlocked = true;
-                                
-                                // Volta o vídeo ao normal após terminar
-                                const audioDuration = notificationSound.duration || 1.5;
-                                setTimeout(() => {
-                                    if (callVideo) {
-                                        callVideo.style.opacity = '1';
-                                    }
-                                    console.log('✓ Vídeo restaurado');
-                                }, (audioDuration + 0.2) * 1000);
-                            })
-                            .catch((error) => {
-                                console.warn('⚠️ Erro ao reproduzir arquivo:', error.message);
-                                console.log('  Detalhes:', error.code, error.name);
-                                
-                                // Se não foi desbloqueado, aguarda e tenta novamente
-                                if (!audioUnlocked && error.name === 'NotAllowedError') {
-                                    console.log('↪️ Áudio não desbloqueado ainda, tentando Web Audio...');
-                                    playWebAudioBeeps();
-                                } else {
-                                    console.log('↪️ Caindo para Web Audio API...');
-                                    playWebAudioBeeps();
-                                }
-                            });
-                        
-                        return;
-                    } else {
-                        console.warn('⚠️ playPromise não retornou promise');
-                        console.log('↪️ Caindo para Web Audio API...');
-                        await playWebAudioBeeps();
-                    }
-                } catch (audioError) {
-                    console.warn('⚠️ Exceção ao reproduzir arquivo:', audioError.message);
-                    console.log('↪️ Caindo para Web Audio API...');
-                    await playWebAudioBeeps();
-                }
-            } else {
-                console.warn('⚠️ Elemento de áudio não encontrado');
-                await playWebAudioBeeps();
-            }
-            
-        } catch (e) {
-            console.error('❌ Erro geral ao tocar som:', e.message);
-            // Volta o vídeo ao normal em caso de erro
-            if (callVideo) {
-                callVideo.style.opacity = '1';
-            }
+    // Função para tocar som de notificação
+    function playNotificationSound() {
+        console.log('🔊 Tocando notificação...');
+        
+        if (!notificationSound) {
+            console.warn('⚠️ Elemento de áudio não encontrado, usando Web Audio');
+            playWebAudioBeeps();
+            return;
+        }
+        
+        // Reseta e toca o áudio
+        notificationSound.currentTime = 0;
+        notificationSound.volume = 1.0;
+        
+        const playPromise = notificationSound.play();
+        
+        if (playPromise !== undefined) {
+            playPromise
+                .then(() => console.log('✓ Som tocando'))
+                .catch(err => {
+                    console.warn('⚠️ Arquivo não tocou:', err.message);
+                    playWebAudioBeeps();
+                });
         }
     }
     
-    // Função auxiliar: gera beeps com Web Audio API
-    async function playWebAudioBeeps() {
+    // Função auxiliar: gera beeps com Web Audio API (fallback)
+    function playWebAudioBeeps() {
+        console.log('🎼 Usando Web Audio API...');
+        
         try {
-            console.log('🎼 Gerando beeps com Web Audio API...');
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            let audioContext;
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                console.log('✓ AudioContext criado, estado:', audioContext.state);
-            } catch (e) {
-                console.error('❌ Erro ao criar AudioContext:', e.message);
-                return;
-            }
-            
-            // Garante que o audioContext está ativo
             if (audioContext.state === 'suspended') {
-                console.log('⏸️ AudioContext suspendido, tentando resumir...');
-                try {
-                    await audioContext.resume();
-                    console.log('✓ AudioContext retomado com sucesso');
-                    audioUnlocked = true;
-                } catch (e) {
-                    console.error('❌ Erro ao resumir AudioContext:', e.message);
-                    console.log('  Isso significa que o usuário ainda não interagiu com a página');
-                    // Não retorna, tenta mesmo assim
-                }
-            } else {
-                audioUnlocked = true;
-                console.log('✓ AudioContext já estava ativo');
+                audioContext.resume();
             }
             
-            // Padrão simples e robusto: 2 beeps em frequência média
-            const playBeep = (freq, duration, startTime) => {
-                try {
-                    const osc = audioContext.createOscillator();
-                    const gain = audioContext.createGain();
-                    
-                    osc.frequency.value = freq;
-                    osc.type = 'sine';
-                    
-                    // Envelope de som: ataque rápido, decay suave
-                    gain.gain.setValueAtTime(1.2, audioContext.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                    
-                    osc.connect(gain);
-                    gain.connect(audioContext.destination);
-                    
-                    const startTimeAbs = audioContext.currentTime + startTime / 1000;
-                    osc.start(startTimeAbs);
-                    osc.stop(startTimeAbs + duration);
-                    
-                    console.log(`  Beep: ${freq}Hz para ${(duration*1000).toFixed(0)}ms`);
-                } catch (e) {
-                    console.error('  ❌ Erro ao criar beep:', e.message);
-                }
+            // 2 beeps simples em 650Hz
+            const playBeep = (delay) => {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.frequency.value = 650;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(1, audioContext.currentTime + delay);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + delay + 0.18);
+                
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(audioContext.currentTime + delay);
+                osc.stop(audioContext.currentTime + delay + 0.18);
             };
             
-            // 2 beeps simples em 650Hz (frequência média, profissional)
-            console.log('🔊 Padrão: 2 beeps em 650Hz');
-            playBeep(650, 0.18, 0);      // Beep 1: imediato
-            playBeep(650, 0.18, 250);    // Beep 2: após 250ms
+            playBeep(0);     // Beep 1
+            playBeep(0.25);  // Beep 2
             
-            console.log('✓ Beeps agendados');
-            
-            // Volta o vídeo ao normal após os beeps terminarem
-            setTimeout(() => {
-                if (callVideo) {
-                    callVideo.style.opacity = '1';
-                }
-                console.log('✓ Vídeo restaurado');
-            }, 650);
-            
+            console.log('✓ Beeps gerados');
         } catch (e) {
-            console.error('❌ Erro ao gerar Web Audio beeps:', e.message);
+            console.error('❌ Web Audio falhou:', e.message);
         }
-    }
-
-    let audioUnlocked = false; // Flag para rastrear se áudio foi desbloqueado
-
-    // Função para desbloquear áudio ao primeiro clique do usuário (necessário em alguns navegadores)
-    function unlockAudio() {
-        const unlock = () => {
-            console.log('🔓 Desbloqueando áudio após interação do usuário...');
-            
-            // Tenta desbloquear com o arquivo de áudio
-            if (notificationSound) {
-                notificationSound.volume = 0.001;
-                notificationSound.play().then(() => {
-                    notificationSound.pause();
-                    notificationSound.currentTime = 0;
-                    audioUnlocked = true;
-                    console.log('✓ Áudio (arquivo) desbloqueado com sucesso');
-                }).catch(err => {
-                    console.warn('⚠️ Erro ao desbloquear áudio (arquivo):', err.message);
-                });
-            }
-            
-            // Também desbloqueia Web Audio API
-            try {
-                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume().then(() => {
-                        audioUnlocked = true;
-                        console.log('✓ AudioContext desbloqueado com sucesso');
-                    }).catch(err => {
-                        console.warn('⚠️ Erro ao desbloquear AudioContext:', err.message);
-                    });
-                } else {
-                    audioUnlocked = true;
-                    console.log('✓ AudioContext já estava ativo');
-                }
-            } catch (e) {
-                console.warn('⚠️ Erro ao criar AudioContext:', e.message);
-            }
-            
-            document.removeEventListener('click', unlock);
-            document.removeEventListener('touchstart', unlock);
-        };
-        
-        document.addEventListener('click', unlock);
-        document.addEventListener('touchstart', unlock);
-        console.log('👂 Aguardando interação do usuário para desbloquear áudio...');
     }
 
     // Função para carregar chamadas recentes (apenas a anterior)
