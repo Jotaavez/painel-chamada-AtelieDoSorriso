@@ -149,7 +149,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p><strong>Serviço:</strong> ${patient.service}${patient.otherServiceDetail ? ' - ' + patient.otherServiceDetail : ''}</p>
                 </div>
                 <div class="patient-actions">
-                    <button class="patient-button" data-patient='${JSON.stringify(patient)}'>Chamar</button>
                     <button class="patient-button" data-name="${patient.name}" style="background-color: #666;">Remover</button>
                 </div>
             `;
@@ -160,17 +159,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Eventos dos botões
         document.querySelectorAll('.patient-button').forEach(btn => {
             btn.addEventListener('click', async (e) => {
-                const patientData = e.target.dataset.patient;
                 const name = e.target.dataset.name;
                 
-                if (patientData) {
-                    // Botão Chamar
-                    const patient = JSON.parse(patientData);
-                    const confirmed = await showConfirm(`Chamar ${patient.name}?`);
-                    if (confirmed) {
-                        await callPatient(patient);
-                    }
-                } else if (name) {
+                if (name) {
                     // Botão Remover
                     const confirmed = await showConfirm(`Remover ${name}?`);
                     if (confirmed) {

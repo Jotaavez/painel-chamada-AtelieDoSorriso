@@ -95,41 +95,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Cria beeps mais longos e mais altos
             const beep = (frequency, duration, delay, volume = 0.5) => {
                 setTimeout(() => {
-                    const osc = audioContext.createOscillator();
-                    const gain = audioContext.createGain();
-                    
-                    osc.frequency.value = frequency;
-                    osc.type = 'sine';
-                    
-                    gain.gain.setValueAtTime(volume, audioContext.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                    
-                    osc.connect(gain);
-                    gain.connect(audioContext.destination);
-                    
-                    osc.start();
-                    osc.stop(audioContext.currentTime + duration);
+                    try {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        
+                        osc.frequency.value = frequency;
+                        osc.type = 'sine';
+                        
+                        gain.gain.setValueAtTime(volume, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                        
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + duration);
+                    } catch (e) {
+                        console.warn('Erro ao criar beep:', e.message);
+                    }
                 }, delay);
             };
             
             // Padrão de som mais chamativo: 4 beeps em 2 frequências
-            // Beep 1: 1000Hz, 300ms
-            beep(1000, 0.3, 0, 3);
-            // Beep 2: 1200Hz, 300ms
-            beep(1200, 0.3, 350, 3);
-            // Beep 3: 1000Hz, 300ms
-            beep(1000, 0.3, 700, 3);
-            // Beep 4: 1200Hz, 300ms
-            beep(1200, 0.3, 1050, 3);
+            // Beeps com intervalos maiores para TV processar melhor
+            beep(1000, 0.25, 0, 2.5);
+            beep(1200, 0.25, 320, 2.5);
+            beep(1000, 0.25, 640, 2.5);
+            beep(1200, 0.25, 960, 2.5);
             
-            console.log('✓ Notificação sonora ativada (duração: ~1.5s)');
+            console.log('✓ Notificação sonora ativada (duração: ~1.4s)');
             
             // Volta o vídeo ao normal após o toque terminar
             setTimeout(() => {
                 if (callVideo) {
                     callVideo.style.opacity = '1';
                 }
-            }, 1600);
+            }, 1500);
             
         } catch (e) {
             console.log('⚠️ Não conseguiu tocar som:', e.message);
