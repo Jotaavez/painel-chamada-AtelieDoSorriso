@@ -93,33 +93,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (notificationSound) {
                 try {
                     console.log('🔊 Tentando reproduzir arquivo de áudio...');
+                    
+                    // Force reset do elemento
+                    notificationSound.pause();
+                    notificationSound.currentTime = 0;
                     notificationSound.muted = false;
                     notificationSound.volume = 1.0;
-                    notificationSound.currentTime = 0;
+                    
+                    // Remove atributo autoplay para permitir controle manual
+                    if (notificationSound.hasAttribute('autoplay')) {
+                        notificationSound.removeAttribute('autoplay');
+                    }
+                    
+                    console.log('  Preparando áudio (duração:', notificationSound.duration, 's)');
                     
                     const playPromise = notificationSound.play();
+                    
                     if (playPromise !== undefined) {
-                        await playPromise;
-                        console.log('✓ Arquivo de áudio tocando');
+                        playPromise
+                            .then(() => {
+                                console.log('✓ Arquivo de áudio tocando com sucesso');
+                                
+                                // Volta o vídeo ao normal após terminar
+                                const audioDuration = notificationSound.duration || 1.5;
+                                setTimeout(() => {
+                                    if (callVideo) {
+                                        callVideo.style.opacity = '1';
+                                    }
+                                    console.log('✓ Vídeo restaurado');
+                                }, (audioDuration + 0.2) * 1000);
+                            })
+                            .catch((error) => {
+                                console.warn('⚠️ Erro ao reproduzir arquivo:', error.message);
+                                console.log('↪️ Caindo para Web Audio API...');
+                                playWebAudioBeeps();
+                            });
                         
-                        // Volta o vídeo ao normal após terminar (ou após 2s máximo)
-                        setTimeout(() => {
-                            if (callVideo) {
-                                callVideo.style.opacity = '1';
-                            }
-                            console.log('✓ Vídeo restaurado');
-                        }, Math.min((notificationSound.duration || 0.5) * 1000 + 100, 2000));
-                        
-                        return; // Sucesso! Não precisa de Web Audio
+                        return; // Sucesso ou tentando!
+                    } else {
+                        console.warn('⚠️ playPromise não retornou promise');
+                        console.log('↪️ Caindo para Web Audio API...');
+                        await playWebAudioBeeps();
                     }
                 } catch (audioError) {
-                    console.warn('⚠️ Erro ao reproduzir arquivo:', audioError.message);
+                    console.warn('⚠️ Exceção ao reproduzir arquivo:', audioError.message);
                     console.log('↪️ Caindo para Web Audio API...');
+                    await playWebAudioBeeps();
                 }
+            } else {
+                console.warn('⚠️ Elemento de áudio não encontrado');
+                await playWebAudioBeeps();
             }
-            
-            // Fallback: Web Audio API se arquivo falhar
-            await playWebAudioBeeps();
             
         } catch (e) {
             console.error('❌ Erro geral ao tocar som:', e.message);
