@@ -8,13 +8,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const recentCallsList = document.getElementById('recent-calls-list');
     const notificationSound = document.getElementById('notification-sound');
     const clockEl = document.getElementById('call-clock');
+    const callVideo = document.getElementById('call-video');
+    const callModalAlert = document.getElementById('call-modal-alert');
+    const modalPatientName = document.getElementById('modal-patient-name');
+    const modalConsultorioValue = document.getElementById('modal-consultorio-value');
+    const modalDoctorValue = document.getElementById('modal-doctor-value');
     
     // Desbloqueia áudio ao primeiro toque/clique do usuário
     unlockAudio();
     
     let lastCallId = null;
-    let previousCall = null;
+    let previousCalls = []; // Array para guardar últimas 2 chamadas
     let blinkTimeout = null;
+    let modalTimeout = null;
+    let videoOriginalVolume = 0.5; // Volume padrão do vídeo
 
     function updateClock() {
         if (!clockEl) return;
@@ -52,16 +59,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3000);
     }
 
+    // Mostra modal de chamada por 8 segundos
+    function showCallModal(call) {
+        if (!callModalAlert || !modalPatientName) return;
+        
+        modalPatientName.textContent = call.patientName;
+        modalConsultorioValue.textContent = call.consultorio;
+        modalDoctorValue.textContent = call.doctorName;
+        callModalAlert.style.display = 'flex';
+        
+        // Limpa timeout anterior se existir
+        if (modalTimeout) {
+            clearTimeout(modalTimeout);
+        }
+        
+        // Auto-close após 8 segundos
+        modalTimeout = setTimeout(() => {
+            callModalAlert.style.display = 'none';
+        }, 8000);
+    }
+
     // Função para tocar som - SIMPLES E UNIVERSAL
     async function playNotificationSound() {
         try {
             console.log('Tocando notificação...');
             
+            // Muta o vídeo durante o toque
+            if (callVideo) {
+                callVideo.style.opacity = '0.5';
+            }
+            
             // Usa Web Audio API para gerar um beep MUITO simples
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
-            // Cria 2 beeps agudos e rápidos
-            const beep = (frequency, duration, delay) => {
+            // Cria beeps mais longos e mais altos
+            const beep = (frequency, duration, delay, volume = 0.5) => {
                 setTimeout(() => {
                     const osc = audioContext.createOscillator();
                     const gain = audioContext.createGain();
@@ -69,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     osc.frequency.value = frequency;
                     osc.type = 'sine';
                     
-                    gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gain.gain.setValueAtTime(volume, audioContext.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
                     
                     osc.connect(gain);
@@ -80,13 +112,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }, delay);
             };
             
-            // 2 beeps: 1000Hz (100ms) depois 1200Hz (100ms)
-            beep(1000, 0.1, 0);
-            beep(1200, 0.1, 150);
+            // Padrão de som mais chamativo: 4 beeps em 2 frequências
+            // Beep 1: 1000Hz, 300ms
+            beep(1000, 0.3, 0, 3);
+            // Beep 2: 1200Hz, 300ms
+            beep(1200, 0.3, 350, 3);
+            // Beep 3: 1000Hz, 300ms
+            beep(1000, 0.3, 700, 3);
+            // Beep 4: 1200Hz, 300ms
+            beep(1200, 0.3, 1050, 3);
             
-            console.log('✓ Notificação sonora ativada');
+            console.log('✓ Notificação sonora ativada (duração: ~1.5s)');
+            
+            // Volta o vídeo ao normal após o toque terminar
+            setTimeout(() => {
+                if (callVideo) {
+                    callVideo.style.opacity = '1';
+                }
+            }, 1600);
+            
         } catch (e) {
             console.log('⚠️ Não conseguiu tocar som:', e.message);
+            // Volta o vídeo ao normal em caso de erro
+            if (callVideo) {
+                callVideo.style.opacity = '1';
+            }
             // Fallback: tenta o arquivo de áudio
             if (notificationSound) {
                 try {
@@ -127,30 +177,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     function loadRecentCalls() {
         recentCallsList.innerHTML = '';
         
-        if (!previousCall) {
-            recentCallsList.innerHTML = '<p class="empty-message">Nenhuma chamada recente</p>';
+        if (!previousCalls || previousCalls.length === 0) {
+            recentCallsList.innerHTML = '<p class="empty-message">Nenhuma chamada</p>';
             return;
         }
 
-        const date = new Date(previousCall.timestamp);
-        const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+        // Mostra as últimas 2 chamadas
+        previousCalls.forEach(call => {
+            const date = new Date(call.timestamp);
+            const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
-        const item = document.createElement('div');
-        item.className = 'recent-item';
-        item.innerHTML = `
-            <strong>${previousCall.patientName}</strong>
-            <span class="recent-meta">Consultório ${previousCall.consultorio} · ${previousCall.doctorName}</span>
-            <span class="recent-time">${time}</span>
-        `;
+            const item = document.createElement('div');
+            item.className = 'recent-item';
+            item.innerHTML = `
+                <strong>${call.patientName}</strong>
+                <span class="recent-meta">${call.doctorName}</span>
+                <span class="recent-time">${time}</span>
+            `;
 
-        recentCallsList.appendChild(item);
+            recentCallsList.appendChild(item);
+        });
     }
 
     // Função para verificar novas chamadas
     function checkForNewCalls(calls) {
         if (!Array.isArray(calls) || calls.length === 0) {
             displayCurrentCall(null);
-            previousCall = null;
+            previousCalls = [];
             recentCallsList.innerHTML = '<p class="empty-message">Nenhuma chamada recente</p>';
             return;
         }
@@ -163,8 +216,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Se for uma nova chamada, toca o som e exibe
         if (latestCall.id !== lastCallId) {
-            // A chamada atual vira a anterior
-            previousCall = lastCallId ? calls.find(c => c.id === lastCallId) : null;
+            // Adiciona a chamada anterior ao histórico de recentes
+            if (lastCallId) {
+                const previousCall = calls.find(c => c.id === lastCallId);
+                if (previousCall) {
+                    // Mantém apenas as 2 últimas chamadas
+                    previousCalls = [previousCall, ...previousCalls].slice(0, 2);
+                }
+            }
+            
             lastCallId = latestCall.id;
             
             // Toca o som
@@ -173,9 +233,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Exibe a chamada
             displayCurrentCall(latestCall);
             triggerBlink();
+            
+            // Mostra modal por 8 segundos
+            showCallModal(latestCall);
         }
 
-        // Atualiza lista de chamadas recentes (mostra a anterior)
+        // Atualiza lista de chamadas recentes
         loadRecentCalls();
     }
 
