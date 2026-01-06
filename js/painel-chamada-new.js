@@ -79,74 +79,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 8000);
     }
 
-    // Função para tocar som - CLÍNICO E OTIMIZADO PARA TV
+    // Função para tocar som - OTIMIZADO PARA TV
     async function playNotificationSound() {
         try {
-            console.log('Tocando notificação...');
+            console.log('📢 Iniciando notificação sonora...');
             
             // Muta o vídeo durante o toque
             if (callVideo) {
                 callVideo.style.opacity = '0.5';
             }
             
-            // Usa Web Audio API para gerar um beep CLÍNICO
+            // Usa Web Audio API com esperas para TV processar melhor
             let audioContext;
             try {
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('✓ AudioContext criado, estado:', audioContext.state);
             } catch (e) {
-                console.warn('AudioContext não disponível:', e.message);
-                // Fallback: espera um pouco e tenta novamente
-                setTimeout(() => playNotificationSound(), 500);
+                console.error('❌ Erro ao criar AudioContext:', e.message);
                 return;
             }
             
-            // Garante que o audioContext está no estado 'running'
+            // Garante que o audioContext está ativo
             if (audioContext.state === 'suspended') {
-                await audioContext.resume();
+                console.log('⏸️ AudioContext suspendido, resumindo...');
+                try {
+                    await audioContext.resume();
+                    console.log('✓ AudioContext retomado');
+                } catch (e) {
+                    console.error('❌ Erro ao resumir AudioContext:', e.message);
+                    return;
+                }
             }
             
-            // Cria beeps em frequências clínicas
-            const beep = (frequency, duration, delay, volume = 1.5) => {
-                setTimeout(() => {
-                    try {
-                        const osc = audioContext.createOscillator();
-                        const gain = audioContext.createGain();
-                        
-                        osc.frequency.value = frequency;
-                        osc.type = 'sine';
-                        
-                        gain.gain.setValueAtTime(volume, audioContext.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-                        
-                        osc.connect(gain);
-                        gain.connect(audioContext.destination);
-                        
-                        osc.start();
-                        osc.stop(audioContext.currentTime + duration);
-                        
-                        console.log(`Beep: ${frequency}Hz, duração: ${(duration*1000).toFixed(0)}ms`);
-                    } catch (e) {
-                        console.warn('Erro ao criar beep:', e.message);
-                    }
-                }, delay);
+            // Padrão simples e robusto: 2 beeps em frequência média
+            // Mais simples e estável para TV processar
+            const playBeep = (freq, duration, startTime) => {
+                try {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    
+                    // Envelope de som: ataque rápido, decay suave
+                    gain.gain.setValueAtTime(1.2, audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    
+                    const startTimeAbs = audioContext.currentTime + startTime / 1000;
+                    osc.start(startTimeAbs);
+                    osc.stop(startTimeAbs + duration);
+                    
+                    console.log(`  Beep: ${freq}Hz para ${(duration*1000).toFixed(0)}ms`);
+                } catch (e) {
+                    console.error('  ❌ Erro ao criar beep:', e.message);
+                }
             };
             
-            // Padrão de som clínico: 3 beeps em frequências baixas
-            beep(600, 0.15, 0, 1.5);      // Beep 1: 600Hz
-            beep(750, 0.15, 200, 1.5);    // Beep 2: 750Hz (pausa de 200ms)
-            beep(600, 0.15, 400, 1.5);    // Beep 3: 600Hz (pausa de 200ms)
+            // 2 beeps simples em 650Hz (frequência média, profissional)
+            console.log('🔊 Padrão: 2 beeps em 650Hz');
+            playBeep(650, 0.18, 0);      // Beep 1: imediato
+            playBeep(650, 0.18, 250);    // Beep 2: após 250ms
             
-            console.log('✓ Notificação sonora iniciada');
+            console.log('✓ Notificação sonora agendada');
             
-            // Volta o vídeo ao normal após o toque terminar
+            // Volta o vídeo ao normal após os beeps terminarem
             setTimeout(() => {
                 if (callVideo) {
                     callVideo.style.opacity = '1';
                 }
-            }, 800);
+                console.log('✓ Vídeo restaurado');
+            }, 650);
             
         } catch (e) {
-            console.error('❌ Erro ao tocar som:', e.message);
+            console.error('❌ Erro geral ao tocar som:', e.message);
             // Volta o vídeo ao normal em caso de erro
             if (callVideo) {
                 callVideo.style.opacity = '1';
