@@ -190,69 +190,87 @@ document.addEventListener('DOMContentLoaded', async () => {
     function loadPreferredVoice() {
         if (!('speechSynthesis' in window)) return null;
         const voices = window.speechSynthesis.getVoices();
+        console.log('🗣️ loadPreferredVoice: total vozes =', voices.length);
         if (!voices || !voices.length) return null;
         const named = voices.find(v => v.name && v.name.toLowerCase().includes(preferredVoiceName));
         const ptBr = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
         const ptGeneric = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
         preferredPtVoice = named || ptBr || ptGeneric || null;
+        if (preferredPtVoice) {
+            console.log('✓ Voz preferida carregada:', preferredPtVoice.name, preferredPtVoice.lang);
+        }
         return preferredPtVoice;
     }
 
     // Lê o nome do paciente e consultório
     function speakCall(call) {
+        console.log('🗣️ speakCall iniciado para:', call?.patientName);
+        
         if (!call || !('speechSynthesis' in window)) {
             console.warn('⚠️ speechSynthesis não disponível');
             return;
         }
 
         const synth = window.speechSynthesis;
-        let voice = preferredPtVoice || loadPreferredVoice();
         const patient = call.patientName || call.name || 'Paciente';
         const consultorio = call.consultorio || 'consultório';
-
         const phrase = `${patient}, consultório ${consultorio}`;
-        const utterance = new SpeechSynthesisUtterance(phrase);
-        utterance.lang = 'pt-BR';
-        utterance.rate = 0.98;
-        utterance.pitch = 0.6;
-        utterance.volume = 1.0; // 0.0 a 1.0
+        
+        console.log('🗣️ Frase a falar:', phrase);
+        console.log('🗣️ Vozes disponíveis:', synth.getVoices().length);
 
-        if (voice) {
-            utterance.voice = voice;
-        }
+        // Função para tentar falar
+        function trySpeak() {
+            const utterance = new SpeechSynthesisUtterance(phrase);
+            utterance.lang = 'pt-BR';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
 
-        utterance.onstart = () => console.log('🗣️ TTS onstart:', utterance.voice ? `${utterance.voice.name} (${utterance.voice.lang})` : 'default');
-        utterance.onend = () => console.log('🗣️ TTS onend');
-        utterance.onerror = (e) => console.warn('⚠️ TTS onerror:', e.error || e.message || e);
-
-        // Cancela qualquer leitura anterior para evitar sobreposição
-        synth.cancel();
-        // Se as vozes ainda não carregaram, espera o evento e tenta novamente rapidamente
-        if (!voice && typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
-            const once = () => {
-                window.speechSynthesis.onvoiceschanged = null;
-                voice = loadPreferredVoice();
-                if (voice) utterance.voice = voice;
-                synth.speak(utterance);
-            };
-            window.speechSynthesis.onvoiceschanged = once;
-            // fallback timeout em 300ms caso o evento não dispare
-            setTimeout(() => {
-                if (window.speechSynthesis.onvoiceschanged === once) {
-                    window.speechSynthesis.onvoiceschanged = null;
+            // Tenta carregar voz preferida
+            const voices = synth.getVoices();
+            if (voices.length > 0) {
+                const maria = voices.find(v => v.name && v.name.toLowerCase().includes('maria'));
+                const ptBr = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
+                const pt = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+                const selectedVoice = maria || ptBr || pt || voices[0];
+                
+                if (selectedVoice) {
+                    utterance.voice = selectedVoice;
+                    console.log('🗣️ Voz selecionada:', selectedVoice.name, selectedVoice.lang);
                 }
-                synth.speak(utterance);
-            }, 300);
-        } else {
+            }
+
+            utterance.onstart = () => console.log('✓ TTS começou a falar');
+            utterance.onend = () => console.log('✓ TTS terminou');
+            utterance.onerror = (e) => console.error('❌ TTS erro:', e.error, e.message);
+
+            synth.cancel();
             synth.speak(utterance);
+            console.log('🗣️ synth.speak() chamado');
         }
-        console.log('🗣️ Falando chamada:', phrase);
+
+        // Tenta falar imediatamente
+        trySpeak();
+        
+        // Se não funcionou, tenta novamente após 500ms (vozes podem não estar prontas)
+        setTimeout(trySpeak, 500);
     }
 
     // Pré-carrega voz quando disponível
     if ('speechSynthesis' in window) {
-        window.speechSynthesis.onvoiceschanged = () => loadPreferredVoice();
-        loadPreferredVoice();
+        console.log('🗣️ speechSynthesis disponível, configurando...');
+        window.speechSynthesis.onvoiceschanged = () => {
+            console.log('🗣️ onvoiceschanged disparado');
+            loadPreferredVoice();
+        };
+        // Carrega imediatamente também
+        setTimeout(() => {
+            loadPreferredVoice();
+            console.log('🗣️ Tentativa inicial de carregar vozes');
+        }, 100);
+    } else {
+        console.warn('⚠️ speechSynthesis não disponível neste navegador');
     }
     
     // Função para carregar chamadas recentes (apenas a anterior)
