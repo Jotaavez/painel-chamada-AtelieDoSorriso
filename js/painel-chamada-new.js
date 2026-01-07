@@ -2,6 +2,7 @@
 import { saveData, loadData, onCallsChange } from './backend-helper.js';
 
 let audioUnlocked = false; // Flag para rastrear se áudio foi desbloqueado
+let speechUnlocked = false; // Flag para rastrear se TTS foi desbloqueado
 
 // Função para desbloquear áudio - chamada ao primeiro clique/toque
 function unlockAudio() {
@@ -19,6 +20,25 @@ function unlockAudio() {
         } catch (e) {
             console.log('  AudioContext:', e.message);
         }
+
+        // Tenta desbloquear TTS (alguns navegadores exigem gesto do usuário)
+        if ('speechSynthesis' in window && !speechUnlocked) {
+            try {
+                const u = new SpeechSynthesisUtterance(' ');
+                u.volume = 0.0;
+                u.rate = 1.0;
+                u.pitch = 1.0;
+                window.speechSynthesis.speak(u);
+                // Pequeno cancel para limpar fila
+                setTimeout(() => {
+                    window.speechSynthesis.cancel();
+                    speechUnlocked = true;
+                    console.log('✓ TTS desbloqueado');
+                }, 50);
+            } catch (err) {
+                console.warn('⚠️ Falha ao desbloquear TTS:', err?.message || err);
+            }
+        }
         
         document.removeEventListener('click', unlock);
         document.removeEventListener('touchstart', unlock);
@@ -26,6 +46,8 @@ function unlockAudio() {
     
     document.addEventListener('click', unlock, { once: true });
     document.addEventListener('touchstart', unlock, { once: true });
+    document.addEventListener('pointerdown', unlock, { once: true });
+    document.addEventListener('keydown', unlock, { once: true });
 }
 
 // Função auxiliar: gera beeps com Web Audio API (fallback)
@@ -184,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const synth = window.speechSynthesis;
-        const voice = preferredPtVoice || loadPreferredVoice();
+        let voice = preferredPtVoice || loadPreferredVoice();
         const patient = call.patientName || call.name || 'Paciente';
         const consultorio = call.consultorio || 'consultório';
 
@@ -192,16 +214,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         const utterance = new SpeechSynthesisUtterance(phrase);
         utterance.lang = 'pt-BR';
         utterance.rate = 0.98;
-        utterance.pitch = 0.6;
-        utterance.volume = 5.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0; // 0.0 a 1.0
 
         if (voice) {
             utterance.voice = voice;
         }
 
+        utterance.onstart = () => console.log('🗣️ TTS onstart:', utterance.voice ? `${utterance.voice.name} (${utterance.voice.lang})` : 'default');
+        utterance.onend = () => console.log('🗣️ TTS onend');
+        utterance.onerror = (e) => console.warn('⚠️ TTS onerror:', e.error || e.message || e);
+
         // Cancela qualquer leitura anterior para evitar sobreposição
         synth.cancel();
-        synth.speak(utterance);
+        // Se as vozes ainda não carregaram, espera o evento e tenta novamente rapidamente
+        if (!voice && typeof window.speechSynthesis.onvoiceschanged !== 'undefined') {
+            const once = () => {
+                window.speechSynthesis.onvoiceschanged = null;
+                voice = loadPreferredVoice();
+                if (voice) utterance.voice = voice;
+                synth.speak(utterance);
+            };
+            window.speechSynthesis.onvoiceschanged = once;
+            // fallback timeout em 300ms caso o evento não dispare
+            setTimeout(() => {
+                if (window.speechSynthesis.onvoiceschanged === once) {
+                    window.speechSynthesis.onvoiceschanged = null;
+                }
+                synth.speak(utterance);
+            }, 300);
+        } else {
+            synth.speak(utterance);
+        }
         console.log('🗣️ Falando chamada:', phrase);
     }
 
