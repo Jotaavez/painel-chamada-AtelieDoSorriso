@@ -59,13 +59,13 @@ function playWebAudioBeeps() {
             osc.stop(now + duration);
         };
         
-        // "Tiiiiin" - tom agudo e prolongado (850Hz por 0.8s)
-        playTone(850, 0, 3, 2);
+        // "Tiiiiin" - tom agudo e prolongado (600Hz por 2.0s)
+        playTone(650, 0, 2, 2);
         
-        // "Doooon" - tom grave e prolongado (450Hz por 1.0s)
-        playTone(450, 0.9, 3, 2);
+        // "Doooon" - tom grave e prolongado (550Hz por 2.0s)
+        playTone(550, 1.5, 2, 2);
         
-        console.log('✓ Toque "tiiiiin doooon" gerado (850Hz → 450Hz)');
+        console.log('✓ Toque "tiiiiin doooon" gerado (600Hz → 550Hz)');
     } catch (e) {
         console.error('❌ Erro ao gerar som:', e.message);
     }
@@ -141,6 +141,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Aguarda o modal renderizar antes de tocar o som (importante na TV)
         setTimeout(() => {
             playNotificationSound();
+            // Fala o nome após iniciar o toque (ajusta para ficar audível após o primeiro tom)
+            setTimeout(() => speakCall(call), 3200);
         }, 300);
         
         // Limpa timeout anterior se existir
@@ -159,43 +161,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('🔊 Tocando notificação...');
         playWebAudioBeeps(); // Usa Web Audio direto (mais confiável em TV)
     }
-    
-    // Função auxiliar: gera beeps com Web Audio API (fallback)
-    function playWebAudioBeeps() {
-        console.log('🎼 Usando Web Audio API...');
-        
-        try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            
-            // 2 beeps simples em 650Hz
-            const playBeep = (delay) => {
-                const osc = audioContext.createOscillator();
-                const gain = audioContext.createGain();
-                
-                osc.frequency.value = 650;
-                osc.type = 'sine';
-                gain.gain.setValueAtTime(1, audioContext.currentTime + delay);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + delay + 0.18);
-                
-                osc.connect(gain);
-                gain.connect(audioContext.destination);
-                osc.start(audioContext.currentTime + delay);
-                osc.stop(audioContext.currentTime + delay + 0.18);
-            };
-            
-            playBeep(0);     // Beep 1
-            playBeep(0.25);  // Beep 2
-            
-            console.log('✓ Beeps gerados');
-        } catch (e) {
-            console.error('❌ Web Audio falhou:', e.message);
-        }
+
+    // Carrega voz preferencial em português (pt-BR se existir)
+    let preferredPtVoice = null;
+    const preferredVoiceName = 'microsoft maria';
+    function loadPreferredVoice() {
+        if (!('speechSynthesis' in window)) return null;
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices || !voices.length) return null;
+        const named = voices.find(v => v.name && v.name.toLowerCase().includes(preferredVoiceName));
+        const ptBr = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt-br'));
+        const ptGeneric = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('pt'));
+        preferredPtVoice = named || ptBr || ptGeneric || null;
+        return preferredPtVoice;
     }
 
+    // Lê o nome do paciente e consultório
+    function speakCall(call) {
+        if (!call || !('speechSynthesis' in window)) {
+            console.warn('⚠️ speechSynthesis não disponível');
+            return;
+        }
+
+        const synth = window.speechSynthesis;
+        const voice = preferredPtVoice || loadPreferredVoice();
+        const patient = call.patientName || call.name || 'Paciente';
+        const consultorio = call.consultorio || 'consultório';
+
+        const phrase = `${patient}, consultório ${consultorio}`;
+        const utterance = new SpeechSynthesisUtterance(phrase);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 0.98;
+        utterance.pitch = 0.6;
+        utterance.volume = 5.0;
+
+        if (voice) {
+            utterance.voice = voice;
+        }
+
+        // Cancela qualquer leitura anterior para evitar sobreposição
+        synth.cancel();
+        synth.speak(utterance);
+        console.log('🗣️ Falando chamada:', phrase);
+    }
+
+    // Pré-carrega voz quando disponível
+    if ('speechSynthesis' in window) {
+        window.speechSynthesis.onvoiceschanged = () => loadPreferredVoice();
+        loadPreferredVoice();
+    }
+    
     // Função para carregar chamadas recentes (apenas a anterior)
     function loadRecentCalls() {
         recentCallsList.innerHTML = '';
@@ -270,4 +285,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Carrega dados iniciais
     const initialCalls = await loadData('call-notifications');
     checkForNewCalls(initialCalls || []);
+    
+    speechSynthesis.getVoices().forEach((v,i)=>console.log(i, v.name, v.lang));
 });
