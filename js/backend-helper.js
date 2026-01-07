@@ -178,3 +178,19 @@ async function unshiftToArray(key, newItem) {
 initPromise = initializeBackend();
 
 export { saveData, loadData, onDataChange, onCallsChange, pushToArray, removeFromArray, unshiftToArray, useFirebase };
+
+// Também expõe globalmente para fallback nomodule
+try {
+    window.BackendHelper = {
+        saveData,
+        loadData,
+        onDataChange,
+        onCallsChange,
+        pushToArray,
+        removeFromArray,
+        unshiftToArray,
+        useFirebase
+    };
+} catch (e) {
+    // ambiente sem window
+}

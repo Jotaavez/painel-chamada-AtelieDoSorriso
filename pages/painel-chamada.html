@@ -1,17 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <!DOCTYPE html>
-    <html lang="pt-br">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Painel de Chamada</title>
-        <link rel="icon" type="image/svg+xml" href="../assets/images/logo/logo-atelie-white-tooth.svg">
-        <link rel="stylesheet" href="../css/main.css">
-        <link rel="stylesheet" href="../css/painel-chamada.css">
-    </head>
-    <body>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Chamada</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/images/logo/logo-atelie-white-tooth.svg">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/painel-chamada.css">
+</head>
+<body>
         <header class="topbar">
             <a class="exit-btn" href="../pages/home.html">Sair</a>
         </header>
@@ -63,9 +60,10 @@
             </div>
         </main>
 
-        
-
+        <!-- Scripts -->
         <script type="module" src="../js/painel-chamada-new.js"></script>
+        <!-- Fallback para navegadores sem suporte a ES Modules (ex.: algumas TVs) -->
+        <script nomodule src="../js/painel-chamada-legacy.js"></script>
         <script src="../js/gradient-bg.js"></script>
     </body>
-    </html>
+</html>

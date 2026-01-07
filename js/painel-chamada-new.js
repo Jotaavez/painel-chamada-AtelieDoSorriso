@@ -81,13 +81,13 @@ function playWebAudioBeeps() {
             osc.stop(now + duration);
         };
         
-        // "Tiiiiin" - tom agudo e prolongado (600Hz por 2.0s)
+        // "Tiiiiin" - tom agudo e prolongado (650Hz por 2.0s)
         playTone(650, 0, 2, 2);
         
         // "Doooon" - tom grave e prolongado (550Hz por 2.0s)
         playTone(550, 1.5, 2, 2);
         
-        console.log('✓ Toque "tiiiiin doooon" gerado (600Hz → 550Hz)');
+        console.log('✓ Toque "tiiiiin doooon" gerado (650Hz → 550Hz)');
     } catch (e) {
         console.error('❌ Erro ao gerar som:', e.message);
     }
@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const utterance = new SpeechSynthesisUtterance(phrase);
         utterance.lang = 'pt-BR';
         utterance.rate = 0.98;
-        utterance.pitch = 1.0;
+        utterance.pitch = 0.6;
         utterance.volume = 1.0; // 0.0 a 1.0
 
         if (voice) {
