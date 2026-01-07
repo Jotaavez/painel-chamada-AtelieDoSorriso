@@ -3,6 +3,7 @@ import { saveData, loadData, onCallsChange } from './backend-helper.js';
 
 let audioUnlocked = false; // Flag para rastrear se áudio foi desbloqueado
 let speechUnlocked = false; // Flag para rastrear se TTS foi desbloqueado
+let sharedAudioContext = null; // AudioContext compartilhado (iOS/Safari exige gesto)
 
 // Função para desbloquear áudio - chamada ao primeiro clique/toque
 function unlockAudio() {
@@ -10,15 +11,17 @@ function unlockAudio() {
         console.log('🔓 Desbloqueando áudio após interação do usuário...');
         audioUnlocked = true;
         
-        // Resume AudioContext if needed
+        // Cria/retoma AudioContext compartilhado (necessário no iOS Safari)
         try {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
+            if (!sharedAudioContext) {
+                sharedAudioContext = new (window.AudioContext || window.webkitAudioContext)();
             }
-            console.log('✓ Áudio desbloqueado');
+            if (sharedAudioContext.state === 'suspended') {
+                sharedAudioContext.resume();
+            }
+            console.log('✓ AudioContext compartilhado pronto:', sharedAudioContext.state);
         } catch (e) {
-            console.log('  AudioContext:', e.message);
+            console.log('  AudioContext erro:', e.message);
         }
 
         // Tenta desbloquear TTS (alguns navegadores exigem gesto do usuário)
@@ -55,10 +58,15 @@ function playWebAudioBeeps() {
     console.log('🎼 Reproduzindo toque clínico...');
     
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const audioContext = sharedAudioContext || new (window.AudioContext || window.webkitAudioContext)();
         
         if (audioContext.state === 'suspended') {
-            audioContext.resume();
+            console.warn('⚠️ AudioContext suspenso, precisa gesto do usuário para retomar');
+            try { audioContext.resume(); } catch(_){}
+            if (audioContext !== sharedAudioContext) {
+                console.warn('⚠️ Sem AudioContext compartilhado. Clique/tocar para habilitar áudio.');
+                return; // Evita chamar sem gesto no iOS
+            }
         }
         
         // Padrão "tiiiiin doooon" - profissional e elegante
@@ -220,7 +228,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('🗣️ Vozes disponíveis:', synth.getVoices().length);
 
         // Função para tentar falar
+        let speakStarted = false;
         function trySpeak() {
+            if (synth.speaking || speakStarted) {
+                console.log('🗣️ Já falando, ignorando nova tentativa');
+                return;
+            }
             const utterance = new SpeechSynthesisUtterance(phrase);
             utterance.lang = 'pt-BR';
             utterance.rate = 1.0;
@@ -241,11 +254,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
 
-            utterance.onstart = () => console.log('✓ TTS começou a falar');
+            utterance.onstart = () => { speakStarted = true; console.log('✓ TTS começou a falar'); };
             utterance.onend = () => console.log('✓ TTS terminou');
             utterance.onerror = (e) => console.error('❌ TTS erro:', e.error, e.message);
 
-            synth.cancel();
+            if (!speakStarted && synth.speaking) synth.cancel();
             synth.speak(utterance);
             console.log('🗣️ synth.speak() chamado');
         }
@@ -344,9 +357,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         checkForNewCalls(calls);
     });
 
-    // Carrega dados iniciais
-    const initialCalls = await loadData('call-notifications');
-    checkForNewCalls(initialCalls || []);
+    // Não carrega manualmente os dados iniciais para evitar chamadas duplicadas.
+    // O listener em tempo real já entrega o estado atual (Firebase) ou o polling (localStorage)
     
     speechSynthesis.getVoices().forEach((v,i)=>console.log(i, v.name, v.lang));
 });
