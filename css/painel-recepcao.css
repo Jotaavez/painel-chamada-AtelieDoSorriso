@@ -566,7 +566,7 @@ footer {
     }
 }
 
-/* Mobile: Tablets e phones */
+/* Responsivo para tablets */
 @media (max-width: 1024px) {
     body header {
         grid-template-columns: 1fr 1fr;
@@ -601,17 +601,13 @@ footer {
             "patients"
             "history";
     }
-
-    .history-section {
-        grid-column: 1;
-    }
 }
 
+/* Responsivo para celulares */
 @media (max-width: 768px) {
     body header {
         grid-template-columns: 1fr;
         padding: 12px 20px;
-        min-height: auto;
     }
 
     body header h1 {
@@ -632,18 +628,6 @@ footer {
         margin-top: 100px;
         padding: 0 15px 80px 15px;
         gap: 20px;
-    }
-
-    .form-section {
-        width: 100%;
-    }
-
-    .section {
-        padding: 16px !important;
-    }
-
-    .section-title {
-        font-size: 1.2em !important;
     }
 }
 
@@ -670,35 +654,5 @@ footer {
         margin-top: 85px;
         padding: 0 10px 70px 10px;
         gap: 15px;
-    }
-
-    .section {
-        padding: 12px !important;
-    }
-
-    .section-title {
-        font-size: 1em !important;
-    }
-
-    .form-section input,
-    .form-section select,
-    .form-section button {
-        padding: 10px 12px !important;
-        font-size: 0.95em !important;
-        min-height: 44px;
-    }
-}
-
-@media (max-width: 360px) {
-    body header h1 {
-        font-size: 0.95em;
-    }
-
-    body .container {
-        padding: 0 8px 60px 8px;
-    }
-
-    .section {
-        padding: 10px !important;
     }
 }
