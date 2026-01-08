@@ -565,3 +565,140 @@ footer {
         object-fit: contain;
     }
 }
+
+/* Mobile: Tablets e phones */
+@media (max-width: 1024px) {
+    body header {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        padding: 15px 40px;
+    }
+
+    body header h1 {
+        font-size: 1.4em;
+        grid-column: 1 / -1;
+    }
+
+    body header a {
+        padding: 8px 16px;
+        font-size: 0.9em;
+        min-height: 44px;
+    }
+
+    body header .clock {
+        font-size: 1.2em;
+        min-width: auto;
+        width: 100%;
+    }
+
+    body .container {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        margin-top: 120px;
+        grid-template-areas:
+            "register"
+            "doctors"
+            "patients"
+            "history";
+    }
+
+    .history-section {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    body header {
+        grid-template-columns: 1fr;
+        padding: 12px 20px;
+        min-height: auto;
+    }
+
+    body header h1 {
+        font-size: 1.2em;
+    }
+
+    body header a {
+        padding: 8px 12px;
+        font-size: 0.8em;
+    }
+
+    body header .clock {
+        font-size: 1em;
+        min-width: auto;
+    }
+
+    body .container {
+        margin-top: 100px;
+        padding: 0 15px 80px 15px;
+        gap: 20px;
+    }
+
+    .form-section {
+        width: 100%;
+    }
+
+    .section {
+        padding: 16px !important;
+    }
+
+    .section-title {
+        font-size: 1.2em !important;
+    }
+}
+
+@media (max-width: 480px) {
+    body header {
+        padding: 10px 12px;
+    }
+
+    body header h1 {
+        font-size: 1em;
+    }
+
+    body header a {
+        padding: 7px 10px;
+        font-size: 0.75em;
+    }
+
+    body header .clock {
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+
+    body .container {
+        margin-top: 85px;
+        padding: 0 10px 70px 10px;
+        gap: 15px;
+    }
+
+    .section {
+        padding: 12px !important;
+    }
+
+    .section-title {
+        font-size: 1em !important;
+    }
+
+    .form-section input,
+    .form-section select,
+    .form-section button {
+        padding: 10px 12px !important;
+        font-size: 0.95em !important;
+        min-height: 44px;
+    }
+}
+
+@media (max-width: 360px) {
+    body header h1 {
+        font-size: 0.95em;
+    }
+
+    body .container {
+        padding: 0 8px 60px 8px;
+    }
+
+    .section {
+        padding: 10px !important;
+    }
+}

@@ -299,6 +299,102 @@ body {
     }
 }
 
+/* Mobile: Tablets pequenos (480px) */
+@media (max-width: 480px) {
+    .call-stage {
+        padding: 70px 12px 12px 12px;
+    }
+
+    .call-card {
+        width: 100%;
+        padding: 16px;
+        gap: 16px;
+        min-height: auto;
+    }
+
+    .call-clock {
+        font-size: 1.3rem;
+        padding: 8px 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .call-patient {
+        font-size: 1.5rem;
+        padding: 4px 12px;
+    }
+
+    .call-consultorio,
+    .call-doctor {
+        font-size: 0.9rem;
+    }
+
+    .call-handle {
+        font-size: 0.75rem;
+    }
+
+    .call-logo img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .topbar {
+        padding: 8px 12px;
+    }
+
+    .exit-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .recent-item {
+        padding: 6px 8px;
+    }
+
+    .recent-item strong {
+        font-size: 0.85rem;
+    }
+
+    .recent-meta,
+    .recent-time {
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile: Phones pequenos (360px) */
+@media (max-width: 360px) {
+    .call-card {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .call-patient {
+        font-size: 1.2rem;
+    }
+
+    .call-consultorio {
+        font-size: 0.85rem;
+    }
+
+    .call-handle {
+        font-size: 0.65rem;
+    }
+
+    .call-left {
+        min-height: 150px;
+    }
+
+    .video-frame {
+        display: none;
+    }
+
+    .call-logo img {
+        width: 35px;
+        height: 35px;
+    }
+}
+
 /* Modal de Chamada com Auto-Close */
 .call-modal-alert {
     position: fixed;

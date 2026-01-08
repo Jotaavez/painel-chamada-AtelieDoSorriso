@@ -182,6 +182,97 @@ body {
     }
 }
 
+/* Mobile: Tablets */
+@media (max-width: 768px) {
+    body header {
+        height: 15vh;
+        padding: 20px 10px;
+    }
+
+    body header img {
+        width: 140px;
+        height: 140px;
+    }
+
+    body article {
+        margin-top: 18vh;
+        margin-bottom: 16vh;
+        padding: 40px 30px;
+    }
+
+    body footer {
+        height: 12vh;
+    }
+}
+
+/* Mobile: Phones */
+@media (max-width: 480px) {
+    body header {
+        height: auto;
+        padding: 15px 10px;
+    }
+
+    body header img {
+        width: 100px;
+        height: 100px;
+    }
+
+    body article {
+        margin-top: 130px;
+        margin-bottom: 110px;
+        padding: 30px 20px;
+        width: 95%;
+    }
+
+    body article .login-button {
+        padding: 12px 35px;
+        font-size: 1em;
+        min-height: 44px;
+    }
+
+    body article .input-group label {
+        font-size: 1.2em;
+    }
+
+    body article .password-wrapper input {
+        padding: 12px 45px 12px 15px;
+        font-size: 1em;
+    }
+
+    body article .password-wrapper .toggle-password {
+        width: 50px;
+    }
+
+    body article .password-wrapper .toggle-password img {
+        width: 28px;
+        height: 28px;
+    }
+
+    body footer {
+        height: auto;
+        padding: 15px 10px;
+    }
+
+    body footer h3 {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 360px) {
+    body header img {
+        width: 80px;
+        height: 80px;
+    }
+
+    body article {
+        padding: 25px 15px;
+    }
+
+    body article .input-group label {
+        font-size: 1em;
+    }
+}
+
 .modal-overlay {
     display: none;
     position: fixed;

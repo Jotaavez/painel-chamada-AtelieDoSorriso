@@ -227,3 +227,97 @@ body {
     transform: translateY(0);
     box-shadow: none;
 }
+
+/* Mobile: Tablets */
+@media (max-width: 768px) {
+    body header {
+        padding: 20px 40px;
+        min-height: auto;
+        gap: 10px;
+    }
+
+    body header img {
+        width: 100px;
+        height: 100px;
+    }
+
+    body header a {
+        padding: 8px 16px;
+        font-size: 0.85em;
+        min-height: 44px;
+    }
+
+    body article {
+        padding: 40px 30px;
+        max-width: 400px;
+    }
+
+    body article .input-group label {
+        font-size: 1em;
+    }
+
+    body article button[type="submit"] {
+        padding: 12px 35px;
+        min-height: 44px;
+    }
+}
+
+/* Mobile: Phones */
+@media (max-width: 480px) {
+    body header {
+        padding: 15px 20px;
+    }
+
+    body header img {
+        width: 80px;
+        height: 80px;
+    }
+
+    body header a {
+        padding: 8px 12px;
+        font-size: 0.8em;
+    }
+
+    body article {
+        padding: 30px 20px;
+        width: 95%;
+        margin-top: 100px;
+        margin-bottom: 100px;
+    }
+
+    body article .input-group label {
+        font-size: 0.95em;
+    }
+
+    body article select,
+    body article input[type="text"] {
+        padding: 12px 15px;
+        font-size: 1em;
+    }
+
+    body article button[type="submit"] {
+        padding: 11px 30px;
+        font-size: 1em;
+        min-height: 44px;
+    }
+
+    body footer {
+        height: auto;
+        padding: 15px 10px;
+    }
+}
+
+@media (max-width: 360px) {
+    body header img {
+        width: 70px;
+        height: 70px;
+    }
+
+    body article {
+        padding: 25px 15px;
+    }
+
+    body article .input-group label {
+        font-size: 0.9em;
+    }
+}
