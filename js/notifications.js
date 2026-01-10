@@ -63,6 +63,7 @@ export async function sendLocalNotification(title, options = {}) {
     } catch (error) {
         console.error('❌ Erro ao enviar notificação:', error);
     }
+}
 
 export function requestNotificationPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
