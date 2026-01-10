@@ -23,20 +23,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('dentist-name-header').textContent = `${dentist.name} ❘ Consultório ${dentist.consultorio}`;
     document.getElementById('dentist-consultorio').style.display = 'none';
 
-    // Inicializa notificações push
+    const testNotificationBtn = document.getElementById('test-notification-btn');
+    const enableNotificationBtn = document.getElementById('enable-notifications-btn');
+
+    // Tenta inicializar notificações sem pedir permissão (para detectar suporte)
     const notificationsEnabled = await initializeNotifications();
     console.log('🔔 Notificações habilitadas:', notificationsEnabled);
 
-    // Mostra botão de teste se notificações estão habilitadas
-    const testNotificationBtn = document.getElementById('test-notification-btn');
-    if (notificationsEnabled && Notification.permission === 'granted') {
+    const showTestButton = () => {
         testNotificationBtn.style.display = 'block';
-        testNotificationBtn.addEventListener('click', () => {
+        testNotificationBtn.onclick = () => {
             sendLocalNotification('🔔 Teste de Notificação', {
                 body: 'As notificações estão funcionando corretamente!',
                 tag: 'test-notification'
             });
-        });
+        };
+    };
+
+    const hideEnableButton = () => {
+        enableNotificationBtn.style.display = 'none';
+    };
+
+    // Se já está permitido, mostra o botão de teste
+    if (Notification.permission === 'granted') {
+        showTestButton();
+        hideEnableButton();
+    } else {
+        // Mostra botão para solicitar permissão via interação do usuário
+        enableNotificationBtn.style.display = 'block';
+        enableNotificationBtn.onclick = async () => {
+            const granted = await initializeNotifications({ userInitiated: true });
+            console.log('🔔 Permissão concedida via clique?', granted);
+            if (granted && Notification.permission === 'granted') {
+                showTestButton();
+                hideEnableButton();
+            }
+        };
     }
 
     // Botão de logout

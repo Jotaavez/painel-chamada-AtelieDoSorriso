@@ -1,5 +1,5 @@
 // Módulo para gerenciar notificações push
-export async function initializeNotifications() {
+export async function initializeNotifications({ userInitiated = false } = {}) {
     // Verifica se o navegador suporta notificações e service workers
     if (!('Notification' in window) || !('serviceWorker' in navigator)) {
         console.log('⚠️ Navegador não suporta notificações push');
@@ -21,8 +21,13 @@ export async function initializeNotifications() {
             return true;
         }
 
-        // Se a permissão não foi definida, solicita
-        if (Notification.permission !== 'denied') {
+        // Se a permissão não foi definida, só solicita quando houver interação do usuário
+        if (Notification.permission === 'default') {
+            if (!userInitiated) {
+                console.log('ℹ️ Permissão de notificação pendente; requer interação do usuário');
+                return false;
+            }
+
             console.log('📢 Solicitando permissão de notificação...');
             const permission = await Notification.requestPermission();
             console.log('📢 Resultado da permissão:', permission);
