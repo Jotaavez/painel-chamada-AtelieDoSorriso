@@ -74,8 +74,6 @@ body {
             min-width: 180px;
             text-align: center;
             flex-shrink: 0;
-            margin-left: 20px;
-            justify-self: end;
         }
 
         p {
@@ -85,7 +83,6 @@ body {
             font-weight: 500;
             display: none;
         }
-    }
     }
 
     article {

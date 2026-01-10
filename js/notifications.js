@@ -1,3 +1,9 @@
+// Detecta se o dispositivo é mobile
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+           window.matchMedia('(max-width: 768px)').matches;
+}
+
 // Módulo para gerenciar notificações push
 export async function initializeNotifications({ userInitiated = false } = {}) {
     // Verifica se o navegador suporta notificações e service workers
@@ -5,6 +11,9 @@ export async function initializeNotifications({ userInitiated = false } = {}) {
         console.log('⚠️ Navegador não suporta notificações push');
         return false;
     }
+
+    const isMobile = isMobileDevice();
+    console.log('📱 Tipo de dispositivo:', isMobile ? 'Mobile' : 'Desktop/Tablet');
 
     try {
         // Usa caminho baseado na raiz do site
@@ -23,17 +32,27 @@ export async function initializeNotifications({ userInitiated = false } = {}) {
             return true;
         }
 
-        // Se a permissão não foi definida, só solicita quando houver interação do usuário
+        // Se a permissão não foi definida
         if (Notification.permission === 'default') {
-            if (!userInitiated) {
-                console.log('ℹ️ Permissão de notificação pendente; requer interação do usuário');
-                return false;
-            }
+            // Em DESKTOP: pede permissão automaticamente
+            // Em MOBILE: requer clique do usuário (política do navegador)
+            if (!isMobile) {
+                console.log('📢 Desktop detectado - Solicitando permissão automaticamente...');
+                const permission = await Notification.requestPermission();
+                console.log('📢 Resultado da permissão:', permission);
+                return permission === 'granted';
+            } else {
+                // Mobile: só pede se houver clique do usuário
+                if (!userInitiated) {
+                    console.log('ℹ️ Mobile detectado - Permissão de notificação pendente; requer interação do usuário');
+                    return false;
+                }
 
-            console.log('📢 Solicitando permissão de notificação...');
-            const permission = await Notification.requestPermission();
-            console.log('📢 Resultado da permissão:', permission);
-            return permission === 'granted';
+                console.log('📢 Mobile - Solicitando permissão via clique do usuário...');
+                const permission = await Notification.requestPermission();
+                console.log('📢 Resultado da permissão:', permission);
+                return permission === 'granted';
+            }
         }
 
         console.log('⚠️ Notificações foram bloqueadas pelo usuário');

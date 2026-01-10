@@ -23,13 +23,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('dentist-name-header').textContent = `${dentist.name} ❘ Consultório ${dentist.consultorio}`;
     document.getElementById('dentist-consultorio').style.display = 'none';
 
+    // Detecta se é mobile
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+                           window.matchMedia('(max-width: 768px)').matches;
+    console.log('📱 Tipo de dispositivo:', isMobileDevice ? 'Mobile' : 'Desktop/Tablet');
+
     const enableNotificationBtn = document.getElementById('enable-notifications-btn');
     const notificationsActiveBtn = document.getElementById('notifications-active-btn');
 
     console.log('🔔 Elemento botão ativar:', enableNotificationBtn);
     console.log('🔔 Elemento botão ativo:', notificationsActiveBtn);
 
-    // Tenta inicializar notificações sem pedir permissão (para detectar suporte)
+    // Tenta inicializar notificações (em desktop, já pede automaticamente)
     const notificationsEnabled = await initializeNotifications();
     console.log('🔔 Notificações habilitadas:', notificationsEnabled);
     console.log('🔔 Permissão atual:', Notification.permission);
@@ -49,12 +54,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('✓ Permissão já concedida, mostrando botão ativo');
         showActiveButton();
         hideEnableButton();
-    } else {
-        console.log('⏳ Permissão não concedida, mostrando botão de ativar');
-        // Mostra botão para solicitar permissão via interação do usuário
+    } else if (isMobileDevice) {
+        // Em mobile, mostra botão para ativar manualmente
+        console.log('⏳ Mobile - Mostrando botão de ativar');
         if (enableNotificationBtn) enableNotificationBtn.style.display = 'block';
         if (enableNotificationBtn) enableNotificationBtn.onclick = async () => {
-            console.log('👆 Clique no botão de ativar notificações');
+            console.log('👆 Clique no botão de ativar notificações (mobile)');
             const granted = await initializeNotifications({ userInitiated: true });
             console.log('🔔 Permissão concedida via clique?', granted);
             if (granted && Notification.permission === 'granted') {
@@ -62,6 +67,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 hideEnableButton();
             }
         };
+    } else {
+        // Em desktop, a permissão já foi pedida automaticamente
+        console.log('💻 Desktop - Aguardando resposta da permissão automática');
+        // Não mostra botão em desktop (permissão foi pedida automaticamente)
     }
 
     // Botão de logout
