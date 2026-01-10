@@ -387,7 +387,9 @@ body {
 }
 
 #modal-yes-btn,
-#modal-no-btn {
+#modal-no-btn,
+#modal-recall-btn,
+#modal-close-btn {
     padding: 13px 35px !important;
     color: white !important;
     border: none !important;
@@ -426,6 +428,26 @@ body {
 }
 
 #modal-no-btn:active {
+    transform: translateY(0) !important;
+}
+
+#modal-recall-btn:hover {
+    background: #C49D2D !important;
+    box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+#modal-recall-btn:active {
+    transform: translateY(0) !important;
+}
+
+#modal-close-btn:hover {
+    background: #555 !important;
+    box-shadow: 0 6px 16px rgba(100, 100, 100, 0.4) !important;
+    transform: translateY(-2px) !important;
+}
+
+#modal-close-btn:active {
     transform: translateY(0) !important;
 }
 

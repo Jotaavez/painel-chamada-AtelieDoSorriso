@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modalPatientName = document.getElementById('modal-patient-name');
     const modalPatientInfo = document.getElementById('modal-patient-info');
     const modalYesBtn = document.getElementById('modal-yes-btn');
-    const modalNoBtn = document.getElementById('modal-no-btn');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
     const modalRecallBtn = document.getElementById('modal-recall-btn');
 
     // Elementos do modal de confirmação de exclusão
@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const cancelDeleteHistoryBtn = document.getElementById('cancel-delete-history-btn');
 
     let currentPatientForModal = null;
+    let isModalFromWaitingPatients = false; // Flag para saber se a modal foi aberta de pacientes aguardando
 
     // Botão para limpar histórico (apenas oculta para o dentista)
     clearHistoryBtn.addEventListener('click', () => {
@@ -110,9 +111,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    modalNoBtn.addEventListener('click', () => {
+    modalCloseBtn.addEventListener('click', () => {
         callModal.style.display = 'none';
         currentPatientForModal = null;
+        isModalFromWaitingPatients = false;
     });
 
     modalRecallBtn.addEventListener('click', async () => {
@@ -202,6 +204,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             const callBtn = div.querySelector('.patient-button');
             callBtn.addEventListener('click', () => {
                 callPatient(patient);
+            });
+
+            // Clique na linha para abrir modal sem chamar
+            div.querySelector('.patient-info').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showCallModalWithoutCalling(patient);
             });
 
             patientsWaitingDiv.appendChild(div);
@@ -300,9 +308,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Função para exibir modal com paciente do histórico
     function showCallModal(patient) {
         console.log('📜 Paciente do histórico selecionado:', patient);
+        isModalFromWaitingPatients = false;
         currentPatientForModal = patient; // Armazena para possível recall
         modalPatientName.textContent = patient.patientName;
         modalPatientInfo.textContent = `Consultório: ${patient.consultorio}`;
+        callModal.style.display = 'flex';
+    }
+
+    // Função para abrir modal sem chamar o paciente (apenas visualizar/recall)
+    function showCallModalWithoutCalling(patient) {
+        console.log('👁️ Abrindo modal para visualização:', patient);
+        isModalFromWaitingPatients = true;
+        const normalizedPatient = {
+            ...patient,
+            name: patient.name || patient.patientName,
+            patientName: patient.patientName || patient.name,
+            doctor: patient.doctor || dentist.name,
+            consultorio: patient.consultorio || dentist.consultorio
+        };
+        currentPatientForModal = normalizedPatient;
+        modalPatientName.textContent = normalizedPatient.name || normalizedPatient.patientName;
+        const serviceName = normalizedPatient.service === 'Outro' 
+            ? normalizedPatient.otherServiceDetail 
+            : normalizedPatient.service;
+        modalPatientInfo.textContent = `Serviço: ${serviceName}`;
         callModal.style.display = 'flex';
     }
 
