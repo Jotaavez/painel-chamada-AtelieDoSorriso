@@ -23,26 +23,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('dentist-name-header').textContent = `${dentist.name} ❘ Consultório ${dentist.consultorio}`;
     document.getElementById('dentist-consultorio').style.display = 'none';
 
-    const testNotificationBtn = document.getElementById('test-notification-btn');
     const enableNotificationBtn = document.getElementById('enable-notifications-btn');
+    const notificationsActiveBtn = document.getElementById('notifications-active-btn');
 
     console.log('🔔 Elemento botão ativar:', enableNotificationBtn);
-    console.log('🔔 Elemento botão testar:', testNotificationBtn);
+    console.log('🔔 Elemento botão ativo:', notificationsActiveBtn);
 
     // Tenta inicializar notificações sem pedir permissão (para detectar suporte)
     const notificationsEnabled = await initializeNotifications();
     console.log('🔔 Notificações habilitadas:', notificationsEnabled);
     console.log('🔔 Permissão atual:', Notification.permission);
 
-    const showTestButton = () => {
-        console.log('✅ Mostrando botão de teste');
-        if (testNotificationBtn) testNotificationBtn.style.display = 'block';
-        if (testNotificationBtn) testNotificationBtn.onclick = () => {
-            sendLocalNotification('🔔 Teste de Notificação', {
-                body: 'As notificações estão funcionando corretamente!',
-                tag: 'test-notification'
-            });
-        };
+    const showActiveButton = () => {
+        console.log('✅ Mostrando botão de notificações ativadas');
+        if (notificationsActiveBtn) notificationsActiveBtn.style.display = 'block';
     };
 
     const hideEnableButton = () => {
@@ -50,10 +44,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (enableNotificationBtn) enableNotificationBtn.style.display = 'none';
     };
 
-    // Se já está permitido, mostra o botão de teste
+    // Se já está permitido, mostra o botão de confirmação
     if (Notification.permission === 'granted') {
-        console.log('✓ Permissão já concedida, mostrando botão de teste');
-        showTestButton();
+        console.log('✓ Permissão já concedida, mostrando botão ativo');
+        showActiveButton();
         hideEnableButton();
     } else {
         console.log('⏳ Permissão não concedida, mostrando botão de ativar');
@@ -64,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const granted = await initializeNotifications({ userInitiated: true });
             console.log('🔔 Permissão concedida via clique?', granted);
             if (granted && Notification.permission === 'granted') {
-                showTestButton();
+                showActiveButton();
                 hideEnableButton();
             }
         };

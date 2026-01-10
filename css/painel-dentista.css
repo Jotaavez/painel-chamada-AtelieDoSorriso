@@ -451,6 +451,13 @@ body {
     transform: translateY(0) !important;
 }
 
+/* Esconder relógio em mobile */
+@media (max-width: 768px) {
+    .clock {
+        display: none !important;
+    }
+}
+
 footer {
     position: fixed;
     bottom: 0;
