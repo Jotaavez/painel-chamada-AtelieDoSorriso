@@ -1,5 +1,6 @@
 // Script para o painel do dentista - com suporte Firebase/localStorage
 import { saveData, loadData, onDataChange, pushToArray, removeFromArray, unshiftToArray } from './backend-helper.js';
+import { initializeNotifications, sendLocalNotification } from './notifications.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     const raw = localStorage.getItem('dentist');
@@ -22,6 +23,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('dentist-name-header').textContent = `${dentist.name} ❘ Consultório ${dentist.consultorio}`;
     document.getElementById('dentist-consultorio').style.display = 'none';
 
+    // Inicializa notificações push
+    const notificationsEnabled = await initializeNotifications();
+    console.log('🔔 Notificações habilitadas:', notificationsEnabled);
+
+    // Mostra botão de teste se notificações estão habilitadas
+    const testNotificationBtn = document.getElementById('test-notification-btn');
+    if (notificationsEnabled && Notification.permission === 'granted') {
+        testNotificationBtn.style.display = 'block';
+        testNotificationBtn.addEventListener('click', () => {
+            sendLocalNotification('🔔 Teste de Notificação', {
+                body: 'As notificações estão funcionando corretamente!',
+                tag: 'test-notification'
+            });
+        });
+    }
+
     // Botão de logout
     const logoutBtn = document.querySelector('header a');
     logoutBtn.addEventListener('click', (e) => {
@@ -33,6 +50,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const patientsWaitingDiv = document.getElementById('patients-waiting');
     const patientsHistoryDiv = document.getElementById('patients-history');
     const clearHistoryBtn = document.getElementById('clear-history-btn');
+
+    // Variável para rastrear pacientes já notificados
+    let notifiedPatients = new Set();
 
     // Elementos da modal
     const callModal = document.getElementById('call-modal');
@@ -213,6 +233,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             patientsWaitingDiv.appendChild(div);
+
+            // Envia notificação apenas para pacientes novos (que não foram notificados ainda)
+            const patientKey = `${patient.name}-${patient.service}`;
+            if (!notifiedPatients.has(patientKey)) {
+                notifiedPatients.add(patientKey);
+                sendLocalNotification(
+                    `Novo paciente: ${patient.name}`,
+                    {
+                        body: `Serviço: ${serviceName}${patient.urgente ? ' (URGENTE)' : ''}`,
+                        tag: `patient-${patientKey}`
+                    }
+                );
+            }
         });
     }
 
