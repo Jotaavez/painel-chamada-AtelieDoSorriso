@@ -26,13 +26,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const testNotificationBtn = document.getElementById('test-notification-btn');
     const enableNotificationBtn = document.getElementById('enable-notifications-btn');
 
+    console.log('🔔 Elemento botão ativar:', enableNotificationBtn);
+    console.log('🔔 Elemento botão testar:', testNotificationBtn);
+
     // Tenta inicializar notificações sem pedir permissão (para detectar suporte)
     const notificationsEnabled = await initializeNotifications();
     console.log('🔔 Notificações habilitadas:', notificationsEnabled);
+    console.log('🔔 Permissão atual:', Notification.permission);
 
     const showTestButton = () => {
-        testNotificationBtn.style.display = 'block';
-        testNotificationBtn.onclick = () => {
+        console.log('✅ Mostrando botão de teste');
+        if (testNotificationBtn) testNotificationBtn.style.display = 'block';
+        if (testNotificationBtn) testNotificationBtn.onclick = () => {
             sendLocalNotification('🔔 Teste de Notificação', {
                 body: 'As notificações estão funcionando corretamente!',
                 tag: 'test-notification'
@@ -41,17 +46,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const hideEnableButton = () => {
-        enableNotificationBtn.style.display = 'none';
+        console.log('❌ Ocultando botão de ativar');
+        if (enableNotificationBtn) enableNotificationBtn.style.display = 'none';
     };
 
     // Se já está permitido, mostra o botão de teste
     if (Notification.permission === 'granted') {
+        console.log('✓ Permissão já concedida, mostrando botão de teste');
         showTestButton();
         hideEnableButton();
     } else {
+        console.log('⏳ Permissão não concedida, mostrando botão de ativar');
         // Mostra botão para solicitar permissão via interação do usuário
-        enableNotificationBtn.style.display = 'block';
-        enableNotificationBtn.onclick = async () => {
+        if (enableNotificationBtn) enableNotificationBtn.style.display = 'block';
+        if (enableNotificationBtn) enableNotificationBtn.onclick = async () => {
+            console.log('👆 Clique no botão de ativar notificações');
             const granted = await initializeNotifications({ userInitiated: true });
             console.log('🔔 Permissão concedida via clique?', granted);
             if (granted && Notification.permission === 'granted') {

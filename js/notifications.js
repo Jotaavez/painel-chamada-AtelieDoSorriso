@@ -7,12 +7,14 @@ export async function initializeNotifications({ userInitiated = false } = {}) {
     }
 
     try {
-        // Calcula o caminho relativo do Service Worker
-        const swPath = new URL('../sw.js', import.meta.url).href;
+        // Usa caminho baseado na raiz do site
+        const swPath = '/sw.js';
         console.log('📍 Registrando Service Worker em:', swPath);
 
-        // Registra o Service Worker com caminho relativo
-        const registration = await navigator.serviceWorker.register(swPath);
+        // Registra o Service Worker
+        const registration = await navigator.serviceWorker.register(swPath, {
+            scope: '/'
+        });
         console.log('✓ Service Worker registrado:', registration);
 
         // Se o usuário já permitiu notificações, apenas retorna
@@ -52,9 +54,9 @@ export async function sendLocalNotification(title, options = {}) {
     try {
         const registration = await navigator.serviceWorker.ready;
         
-        // Caminho relativo para os ícones
-        const iconPath = new URL('../assets/images/logo/logo-atelie-white-tooth.svg', import.meta.url).href;
-        const badgePath = new URL('../assets/images/logo/logo-atelie-color-tooth.svg', import.meta.url).href;
+        // Usa caminhos baseados na raiz do site
+        const iconPath = '/assets/images/logo/logo-atelie-white-tooth.svg';
+        const badgePath = '/assets/images/logo/logo-atelie-color-tooth.svg';
 
         registration.showNotification(title, {
             icon: iconPath,
