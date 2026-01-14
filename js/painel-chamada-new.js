@@ -237,8 +237,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const utterance = new SpeechSynthesisUtterance(phrase);
             utterance.lang = 'pt-BR';
             utterance.rate = 1.0;
-            utterance.pitch = 1.0;
-            utterance.volume = 5.0;
+            utterance.pitch = 2.0;
+            utterance.volume = 6.0;
 
             // Tenta carregar voz preferida
             const voices = synth.getVoices();
