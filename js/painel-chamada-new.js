@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             utterance.lang = 'pt-BR';
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
-            utterance.volume = 1.0;
+            utterance.volume = 5.0;
 
             // Tenta carregar voz preferida
             const voices = synth.getVoices();
