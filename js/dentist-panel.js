@@ -28,49 +28,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                            window.matchMedia('(max-width: 768px)').matches;
     console.log('📱 Tipo de dispositivo:', isMobileDevice ? 'Mobile' : 'Desktop/Tablet');
 
-    const enableNotificationBtn = document.getElementById('enable-notifications-btn');
-    const notificationsActiveBtn = document.getElementById('notifications-active-btn');
+    const notificationsToggle = document.getElementById('notifications-toggle');
+    let notificationsEnabled = false;
 
-    console.log('🔔 Elemento botão ativar:', enableNotificationBtn);
-    console.log('🔔 Elemento botão ativo:', notificationsActiveBtn);
+    // Verifica se o navegador suporta notificações
+    const notificationsSupported = 'Notification' in window;
+    console.log('🔔 Notificações suportadas:', notificationsSupported);
 
-    // Tenta inicializar notificações (em desktop, já pede automaticamente)
-    const notificationsEnabled = await initializeNotifications();
-    console.log('🔔 Notificações habilitadas:', notificationsEnabled);
-    console.log('🔔 Permissão atual:', Notification.permission);
-
-    const showActiveButton = () => {
-        console.log('✅ Mostrando botão de notificações ativadas');
-        if (notificationsActiveBtn) notificationsActiveBtn.style.display = 'block';
-    };
-
-    const hideEnableButton = () => {
-        console.log('❌ Ocultando botão de ativar');
-        if (enableNotificationBtn) enableNotificationBtn.style.display = 'none';
-    };
-
-    // Se já está permitido, mostra o botão de confirmação
-    if (Notification.permission === 'granted') {
-        console.log('✓ Permissão já concedida, mostrando botão ativo');
-        showActiveButton();
-        hideEnableButton();
-    } else if (isMobileDevice) {
-        // Em mobile, mostra botão para ativar manualmente
-        console.log('⏳ Mobile - Mostrando botão de ativar');
-        if (enableNotificationBtn) enableNotificationBtn.style.display = 'block';
-        if (enableNotificationBtn) enableNotificationBtn.onclick = async () => {
-            console.log('👆 Clique no botão de ativar notificações (mobile)');
-            const granted = await initializeNotifications({ userInitiated: true });
-            console.log('🔔 Permissão concedida via clique?', granted);
-            if (granted && Notification.permission === 'granted') {
-                showActiveButton();
-                hideEnableButton();
-            }
-        };
+    if (!notificationsSupported) {
+        // Desabilita o toggle se notificações não são suportadas
+        if (notificationsToggle) {
+            notificationsToggle.disabled = true;
+            notificationsToggle.parentElement.style.opacity = '0.5';
+        }
+        console.log('⚠️ Notificações não suportadas neste navegador');
     } else {
-        // Em desktop, a permissão já foi pedida automaticamente
-        console.log('💻 Desktop - Aguardando resposta da permissão automática');
-        // Não mostra botão em desktop (permissão foi pedida automaticamente)
+        // Verifica se as notificações já foram ativadas anteriormente
+        const savedNotificationState = localStorage.getItem(`notifications-${dentist.name}`);
+        
+        // Se já está permitido e estava ativado antes, marca o toggle
+        if (Notification.permission === 'granted' && savedNotificationState === 'enabled') {
+            notificationsToggle.checked = true;
+            notificationsEnabled = true;
+            console.log('✓ Notificações já estavam ativadas');
+        }
+
+        // Handler do toggle
+        notificationsToggle.addEventListener('change', async () => {
+            if (notificationsToggle.checked) {
+                // Usuário quer ativar notificações
+                console.log('🔔 Ativando notificações...');
+                const granted = await initializeNotifications({ userInitiated: true });
+                
+                if (granted && Notification.permission === 'granted') {
+                    notificationsEnabled = true;
+                    localStorage.setItem(`notifications-${dentist.name}`, 'enabled');
+                    console.log('✓ Notificações ativadas com sucesso');
+                } else {
+                    // Se não conseguiu ativar, desmarca o toggle
+                    notificationsToggle.checked = false;
+                    notificationsEnabled = false;
+                    console.log('⚠️ Não foi possível ativar as notificações');
+                }
+            } else {
+                // Usuário desativou notificações
+                notificationsEnabled = false;
+                localStorage.setItem(`notifications-${dentist.name}`, 'disabled');
+                console.log('🔕 Notificações desativadas');
+            }
+        });
     }
 
     // Botão de logout
@@ -268,9 +274,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             patientsWaitingDiv.appendChild(div);
 
-            // Envia notificação apenas para pacientes novos (que não foram notificados ainda)
+            // Envia notificação apenas para pacientes novos (que não foram notificados ainda) e se as notificações estiverem ativadas
             const patientKey = `${patient.name}-${patient.service}`;
-            if (!notifiedPatients.has(patientKey)) {
+            if (!notifiedPatients.has(patientKey) && notificationsEnabled) {
                 notifiedPatients.add(patientKey);
                 sendLocalNotification(
                     `Novo paciente: ${patient.name}`,

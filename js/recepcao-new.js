@@ -11,6 +11,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     const confirmMessage = document.getElementById('confirm-message');
     const confirmYes = document.getElementById('confirm-yes');
     const confirmNo = document.getElementById('confirm-no');
+    const filterDoctorSelect = document.getElementById('filter-doctor');
+    const resetHistoryBtn = document.getElementById('reset-history-btn');
+    const editModal = document.getElementById('edit-modal');
+    const editForm = document.getElementById('edit-form');
+    const editCancelBtn = document.getElementById('edit-cancel');
+    const editPatientName = document.getElementById('edit-patient-name');
+    const editDoctorSelect = document.getElementById('edit-doctor');
+    const editServiceSelect = document.getElementById('edit-service');
+    const editOtherServiceGroup = document.getElementById('edit-other-service-group');
+    const editOtherServiceDetail = document.getElementById('edit-other-service-detail');
+    const editUrgente = document.getElementById('edit-urgente');
+    
+    let currentEditingPatientIndex = -1;
 
     // Modal genérico de confirmação/aviso
     function showConfirm(message) {
@@ -64,6 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Combina e remove duplicatas
         const allDoctors = [...new Set([...fixedDoctors, ...dynamicDoctors])];
         
+        // Atualiza select do formulário principal
         doctorSelect.innerHTML = '<option value="">Escolha o doutor</option>';
         allDoctors.forEach(doctor => {
             const option = document.createElement('option');
@@ -72,8 +86,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             doctorSelect.appendChild(option);
         });
 
+        // Atualiza select do formulário de edição
+        editDoctorSelect.innerHTML = '<option value="">Escolha o doutor</option>';
+        allDoctors.forEach(doctor => {
+            const option = document.createElement('option');
+            option.value = doctor;
+            option.textContent = doctor;
+            editDoctorSelect.appendChild(option);
+        });
+
         // Atualiza lista de gerenciamento de dentistas
         updateDoctorsList(allDoctors, fixedDoctors);
+        
+        // Atualiza filtro de dentistas no histórico
+        updateDoctorFilter(allDoctors);
+    }
+
+    // Atualiza o select de filtro de dentistas
+    function updateDoctorFilter(allDoctors) {
+        if (!filterDoctorSelect) return;
+        
+        const currentValue = filterDoctorSelect.value;
+        filterDoctorSelect.innerHTML = '<option value="">Todos os Dentistas</option>';
+        
+        allDoctors.forEach(doctor => {
+            const option = document.createElement('option');
+            option.value = doctor;
+            option.textContent = doctor;
+            filterDoctorSelect.appendChild(option);
+        });
+        
+        // Restaura o valor selecionado se ainda existir
+        if (currentValue && allDoctors.includes(currentValue)) {
+            filterDoctorSelect.value = currentValue;
+        }
     }
 
     // Atualiza e exibe lista de dentistas para remover
@@ -133,7 +179,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
-        patients.forEach(patient => {
+        patients.forEach((patient, index) => {
             const div = document.createElement('div');
             div.className = 'patient-item';
 
@@ -149,24 +195,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p><strong>Serviço:</strong> ${patient.service}${patient.otherServiceDetail ? ' - ' + patient.otherServiceDetail : ''}</p>
                 </div>
                 <div class="patient-actions">
-                    <button class="patient-button" data-name="${patient.name}" style="background-color: #666;">Remover</button>
+                    <button class="patient-button edit-btn" data-index="${index}" style="background-color: #d9534f;">Editar</button>
+                    <button class="patient-button remove-btn" data-name="${patient.name}" style="background-color: #666;">Remover</button>
                 </div>
             `;
 
             patientList.appendChild(div);
         });
 
-        // Eventos dos botões
-        document.querySelectorAll('.patient-button').forEach(btn => {
+        // Eventos dos botões de editar
+        document.querySelectorAll('.edit-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const index = parseInt(e.target.dataset.index);
+                openEditModal(patients[index], index);
+            });
+        });
+
+        // Eventos dos botões de remover
+        document.querySelectorAll('.remove-btn').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 const name = e.target.dataset.name;
-                
-                if (name) {
-                    // Botão Remover
-                    const confirmed = await showConfirm(`Remover ${name}?`);
-                    if (confirmed) {
-                        await removeFromArray('pending-patients', p => p.name !== name);
-                    }
+                const confirmed = await showConfirm(`Remover ${name}?`);
+                if (confirmed) {
+                    await removeFromArray('pending-patients', p => p.name !== name);
                 }
             });
         });
@@ -231,8 +282,71 @@ document.addEventListener('DOMContentLoaded', async () => {
         otherServiceGroup.style.display = serviceSelect.value === 'Outro' ? 'block' : 'none';
     });
 
-    // Limpar histórico
-    const resetHistoryBtn = document.getElementById('reset-history-btn');
+    // Alternância de serviço "Outro" no formulário de edição
+    editServiceSelect.addEventListener('change', () => {
+        editOtherServiceGroup.style.display = editServiceSelect.value === 'Outro' ? 'block' : 'none';
+    });
+
+    // Abre modal de edição
+    function openEditModal(patient, index) {
+        currentEditingPatientIndex = index;
+        editPatientName.value = patient.name;
+        editDoctorSelect.value = patient.doctor;
+        editServiceSelect.value = patient.service;
+        editOtherServiceDetail.value = patient.otherServiceDetail || '';
+        editUrgente.checked = patient.urgente || false;
+        editOtherServiceGroup.style.display = patient.service === 'Outro' ? 'block' : 'none';
+        editModal.classList.add('active');
+    }
+
+    // Fecha modal de edição
+    function closeEditModal() {
+        editModal.classList.remove('active');
+        editForm.reset();
+        currentEditingPatientIndex = -1;
+    }
+
+    // Botão cancelar edição
+    editCancelBtn.addEventListener('click', closeEditModal);
+
+    // Salva edição do paciente
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = editPatientName.value;
+        const doctor = editDoctorSelect.value;
+        const service = editServiceSelect.value;
+        const otherServiceDetail = editOtherServiceDetail.value;
+        const urgente = editUrgente.checked;
+
+        if (!name || !doctor || !service) {
+            await showInfo('Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        // Carrega lista atual
+        const patients = await loadData('pending-patients') || [];
+        
+        // Atualiza o paciente mantendo a posição na fila
+        if (currentEditingPatientIndex >= 0 && currentEditingPatientIndex < patients.length) {
+            patients[currentEditingPatientIndex] = {
+                ...patients[currentEditingPatientIndex],
+                name,
+                doctor,
+                service,
+                otherServiceDetail,
+                urgente
+            };
+
+            // Salva a lista atualizada
+            await saveData('pending-patients', patients);
+            
+            closeEditModal();
+            await showInfo('Paciente atualizado com sucesso!');
+        }
+    });
+
+    // Botão limpar histórico
     if (resetHistoryBtn) {
         resetHistoryBtn.addEventListener('click', async () => {
             const confirmed = await showConfirm('Limpar todo o histórico de chamadas?');
@@ -252,35 +366,60 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (!historyList) return;
 
+        // Aplica filtro por dentista se selecionado
+        const selectedDoctor = filterDoctorSelect ? filterDoctorSelect.value : '';
+        if (selectedDoctor) {
+            history = history.filter(call => call.doctorName === selectedDoctor);
+        }
+
         historyList.innerHTML = '';
 
         if (history.length === 0) {
-            historyList.innerHTML = '<p class="empty-message">Nenhum paciente no histórico</p>';
+            const message = selectedDoctor 
+                ? `Nenhum paciente atendido por ${selectedDoctor}` 
+                : 'Nenhum paciente no histórico';
+            historyList.innerHTML = `<p class="empty-message">${message}</p>`;
             return;
         }
 
         history.forEach(call => {
             const div = document.createElement('div');
             div.className = 'patient-item';
-            div.style.cursor = 'pointer';
 
             const date = new Date(call.timestamp);
+            const day = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
             const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 
             div.innerHTML = `
-                <div class="patient-info">
+                <div class="patient-info" style="cursor: pointer;">
                     <div class="patient-header">
                         <strong>${call.patientName}</strong>
                     </div>
                     <p><strong>Consultório:</strong> ${call.consultorio}</p>
                     <p><strong>Dr(a):</strong> ${call.doctorName}</p>
-                    <p style="margin-top: 5px; color: #888; font-size: 0.9em;"><strong>Hora:</strong> ${time}</p>
+                    <p style="margin-top: 5px; color: #888; font-size: 0.9em;"><strong>Data:</strong> ${day}</p>
+                    <p style="color: #888; font-size: 0.9em;"><strong>Hora:</strong> ${time}</p>
+                </div>
+                <div class="patient-actions">
+                    <button class="patient-button" data-call-id="${call.id}" style="background-color: #d9534f;">Remover</button>
                 </div>
             `;
 
-            // Adiciona clique para mostrar modal com detalhes
-            div.addEventListener('click', () => {
-                showHistoryModal(call, time);
+            // Adiciona clique na info para mostrar modal com detalhes
+            const infoDiv = div.querySelector('.patient-info');
+            infoDiv.addEventListener('click', () => {
+                showHistoryModal(call, day, time);
+            });
+
+            // Adiciona clique no botão remover
+            const removeBtn = div.querySelector('.patient-button');
+            removeBtn.addEventListener('click', async (e) => {
+                e.stopPropagation(); // Evita abrir o modal
+                const callId = e.target.dataset.callId;
+                const confirmed = await showConfirm(`Remover ${call.patientName} do histórico?`);
+                if (confirmed) {
+                    await removeFromArray('call-history', c => c.id !== callId);
+                }
             });
 
             historyList.appendChild(div);
@@ -288,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Mostra modal com detalhes do histórico
-    function showHistoryModal(call, time) {
+    function showHistoryModal(call, day, time) {
         if (!confirmModal) return;
         
         const service = call.service || 'Não especificado';
@@ -300,6 +439,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <p><strong>Consultório:</strong> ${call.consultorio}</p>
                 <p><strong>Dr(a):</strong> ${call.doctorName}</p>
                 <p><strong>Serviço:</strong> ${service}${detail}</p>
+                <p><strong>Data:</strong> ${day}</p>
                 <p><strong>Hora da Chamada:</strong> ${time}</p>
             </div>
         `;
@@ -324,6 +464,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Event listener para filtro de dentista
+    if (filterDoctorSelect) {
+        filterDoctorSelect.addEventListener('change', () => {
+            loadHistoryList();
+        });
+    }
+
     // Configura listeners em tempo real
     onDataChange('pending-patients', (patients) => {
         loadPatientsList(patients);
@@ -337,4 +484,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadDoctorsList();
     await loadPatientsList();
     await loadHistoryList();
-});
+})();

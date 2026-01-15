@@ -7,8 +7,13 @@ function isMobileDevice() {
 // Módulo para gerenciar notificações push
 export async function initializeNotifications({ userInitiated = false } = {}) {
     // Verifica se o navegador suporta notificações e service workers
-    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
-        console.log('⚠️ Navegador não suporta notificações push');
+    if (!('Notification' in window)) {
+        console.log('⚠️ Navegador não suporta notificações');
+        return false;
+    }
+
+    if (!('serviceWorker' in navigator)) {
+        console.log('⚠️ Navegador não suporta service workers');
         return false;
     }
 
@@ -34,25 +39,16 @@ export async function initializeNotifications({ userInitiated = false } = {}) {
 
         // Se a permissão não foi definida
         if (Notification.permission === 'default') {
-            // Em DESKTOP: pede permissão automaticamente
-            // Em MOBILE: requer clique do usuário (política do navegador)
-            if (!isMobile) {
-                console.log('📢 Desktop detectado - Solicitando permissão automaticamente...');
-                const permission = await Notification.requestPermission();
-                console.log('📢 Resultado da permissão:', permission);
-                return permission === 'granted';
-            } else {
-                // Mobile: só pede se houver clique do usuário
-                if (!userInitiated) {
-                    console.log('ℹ️ Mobile detectado - Permissão de notificação pendente; requer interação do usuário');
-                    return false;
-                }
-
-                console.log('📢 Mobile - Solicitando permissão via clique do usuário...');
-                const permission = await Notification.requestPermission();
-                console.log('📢 Resultado da permissão:', permission);
-                return permission === 'granted';
+            // Só pede permissão se for iniciado pelo usuário
+            if (!userInitiated) {
+                console.log('ℹ️ Permissão de notificação pendente; requer interação do usuário');
+                return false;
             }
+
+            console.log('📢 Solicitando permissão via clique do usuário...');
+            const permission = await Notification.requestPermission();
+            console.log('📢 Resultado da permissão:', permission);
+            return permission === 'granted';
         }
 
         console.log('⚠️ Notificações foram bloqueadas pelo usuário');
@@ -64,6 +60,12 @@ export async function initializeNotifications({ userInitiated = false } = {}) {
 }
 
 export async function sendLocalNotification(title, options = {}) {
+    // Verifica se notificações são suportadas
+    if (!('Notification' in window)) {
+        console.warn('⚠️ Notificações não são suportadas neste navegador');
+        return;
+    }
+
     // Usa notificações locais (não requer backend)
     if (Notification.permission !== 'granted') {
         console.warn('⚠️ Permissão de notificação não foi concedida');
@@ -83,6 +85,12 @@ export async function sendLocalNotification(title, options = {}) {
             tag: 'patient-notification',
             requireInteraction: true,
             vibrate: [200, 100, 200],
+            actions: [
+                {
+                    action: 'open',
+                    title: 'Chamar'
+                }
+            ],
             ...options
         });
         console.log('✓ Notificação enviada:', title);

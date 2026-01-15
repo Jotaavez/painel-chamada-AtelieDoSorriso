@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pw === SITE_PASSWORD) {
             localStorage.setItem('authed', '1');
             // redireciona para a página inicial do painel
-            window.location.href = '../pages/home.html';
+            window.location.href = '../index.html';
         } else {
             showErrorModal('Senha incorreta');
             form.password.value = '';

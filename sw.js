@@ -4,12 +4,18 @@ self.addEventListener('push', (event) => {
     
     const options = {
         body: data.body || 'Novo paciente aguardando!',
-        icon: '../assets/images/logo/logo-atelie-white-tooth.svg',
-        badge: '../assets/images/logo/logo-atelie-color-tooth.svg',
+        icon: '/assets/images/logo/logo-atelie-white-tooth.svg',
+        badge: '/assets/images/logo/logo-atelie-color-tooth.svg',
         tag: 'patient-notification',
         requireInteraction: true,
         vibrate: [200, 100, 200],
-        data: data.data || {}
+        data: data.data || {},
+        actions: [
+            {
+                action: 'open',
+                title: 'Chamar'
+            }
+        ]
     };
 
     event.waitUntil(
@@ -19,17 +25,23 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
+    
+    // Se clicar no botão "Chamar" ou no corpo da notificação
+    const urlToOpen = event.action === 'open' || !event.action 
+        ? '/pages/painel-dentista.html' 
+        : '/';
+    
     event.waitUntil(
         clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-            // Tenta focar na janela já aberta
+            // Tenta focar na janela já aberta do painel do dentista
             for (let client of clientList) {
-                if (client.url === '/' && 'focus' in client) {
+                if (client.url.includes('painel-dentista.html') && 'focus' in client) {
                     return client.focus();
                 }
             }
-            // Se não encontrar, abre uma nova janela
+            // Se não encontrar, abre uma nova janela no painel do dentista
             if (clients.openWindow) {
-                return clients.openWindow('/');
+                return clients.openWindow(urlToOpen);
             }
         })
     );

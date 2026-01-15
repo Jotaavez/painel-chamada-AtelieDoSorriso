@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let previousCalls = []; // Array para guardar últimas 2 chamadas
     let blinkTimeout = null;
     let modalTimeout = null;
-    let videoOriginalVolume = 0.5; // Volume padrão do vídeo
+    let videoOriginalVolume = 0.25; // Volume padrão do vídeo
 
     function updateClock() {
         if (!clockEl) return;
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             utterance.lang = 'pt-BR';
             utterance.rate = 1.0;
             utterance.pitch = 1.0;
-            utterance.volume = 1.0;
+            utterance.volume = 20.0;
 
             // Tenta carregar voz preferida
             const voices = synth.getVoices();

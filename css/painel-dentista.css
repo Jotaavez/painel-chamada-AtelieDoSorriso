@@ -213,6 +213,7 @@ body {
             position: relative;
             font-weight: 600;
             font-size: 1.5em;
+            cursor: pointer;
         }
 
         .patient-item:hover {
@@ -319,6 +320,14 @@ body {
             transform: translateY(0);
             box-shadow: 0 2px 8px rgba(139, 0, 0, 0.2);
         }
+}
+
+/* Animação especial para o histórico */
+#patients-history .patient-item:hover {
+    border-color: #D4AF37 !important;
+    box-shadow: 0 8px 24px rgba(212, 175, 55, 0.25) !important;
+    transform: translateY(-3px) scale(1.01) !important;
+    background: linear-gradient(180deg, #fffef8 0%, #faf9f0 100%) !important;
 }
 
 /* Modal Premium */
@@ -519,4 +528,5 @@ footer {
     body article {
         padding: 0 10px;
     }
+}
 }

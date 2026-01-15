@@ -10,7 +10,7 @@
 </head>
 <body>
     <header>
-        <a href="../pages/home.html">Sair</a>
+        <a href="../index.html">Sair</a>
         <h1>Painel da Recepção</h1>
         <div id="clock" class="clock">00:00:00</div>
     </header>
@@ -72,6 +72,12 @@
             <h2>Histórico de Chamadas
                 <button id="reset-history-btn" type="button">Limpar Histórico</button>
             </h2>
+            <div class="input-group" style="margin-bottom: 20px;">
+                <label for="filter-doctor">Filtrar por Dentista</label>
+                <select id="filter-doctor" name="filterDoctor">
+                    <option value="">Todos os Dentistas</option>
+                </select>
+            </div>
             <div id="history-list">
                 <p class="empty-message">Nenhum paciente no histórico</p>
             </div>
@@ -90,6 +96,47 @@
                 <button id="confirm-yes" type="button">Confirmar</button>
                 <button id="confirm-no" type="button">Cancelar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal de edição de paciente -->
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px;">
+            <h3 style="margin-top: 0;">Editar Paciente</h3>
+            <form id="edit-form">
+                <div class="input-group">
+                    <label for="edit-patient-name">Nome do Paciente</label>
+                    <input type="text" id="edit-patient-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="edit-doctor">Doutor</label>
+                    <select id="edit-doctor" required>
+                        <option value="">Escolha o doutor</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="edit-service">Serviço</label>
+                    <select id="edit-service" required>
+                        <option value="">Escolha o serviço</option>
+                        <option value="Avaliação">Avaliação</option>
+                        <option value="Manutenção">Manutenção</option>
+                        <option value="Prótese">Prótese</option>
+                        <option value="Outro">Outro (especificar)</option>
+                    </select>
+                </div>
+                <div class="input-group" id="edit-other-service-group" style="display: none;">
+                    <label for="edit-other-service-detail">Especificar Serviço</label>
+                    <textarea id="edit-other-service-detail" placeholder="Descreva o serviço"></textarea>
+                </div>
+                <div class="input-group checkbox-group">
+                    <input type="checkbox" id="edit-urgente">
+                    <label for="edit-urgente">Paciente Urgente</label>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit">Salvar</button>
+                    <button type="button" id="edit-cancel">Cancelar</button>
+                </div>
+            </form>
         </div>
     </div>
 
