@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnDra = document.getElementById('btn-dra');
     const btnDr = document.getElementById('btn-dr');
 
-    const fixedDoctors = ['Dra. Jessica Reis', 'Dra. Dani'];
+    const fixedDoctors = ['Dra. Jessica Reis', 'Dra. Dani', 'Dr. Patrick'];
 
     async function loadDoctorsIntoSelect() {
         if (!dentistSelect) return;

@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Carrega lista de dentistas do localStorage
     async function loadDoctorsList() {
         // Dentistas fixos
-        const fixedDoctors = ['Dra. Jessica Reis', 'Dra. Dani'];
+        const fixedDoctors = ['Dra. Jessica Reis', 'Dra. Dani', 'Dr. Patrick'];
         
         // Carrega dentistas dinâmicos
         const dynamicDoctors = await loadData('doctors') || [];
