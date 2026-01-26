@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     unlockAudio();
     
     let lastCallId = null;
+    let lastCallShownAt = 0; // evita repetir a mesma chamada em sequência
     let previousCalls = []; // Array para guardar últimas 2 chamadas
     let blinkTimeout = null;
     let modalTimeout = null;
@@ -327,8 +328,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Pega apenas a ÚLTIMA chamada
         const latestCall = calls[0];
 
-        // Se for uma nova chamada, toca o som e exibe
-        if (latestCall.id !== lastCallId) {
+        const now = Date.now();
+
+        // Se for a mesma chamada, mas ainda recente, não repete
+        if (latestCall.id === lastCallId && now - lastCallShownAt < 15000) {
+            // Ainda assim mantém o display atualizado
+            displayCurrentCall(latestCall);
+            return;
+        }
+
+        // Se for uma nova chamada (ou a mesma após o intervalo), toca o som e exibe
+        if (latestCall.id !== lastCallId || now - lastCallShownAt >= 15000) {
             // Adiciona a chamada anterior ao histórico de recentes
             if (lastCallId) {
                 const previousCall = calls.find(c => c.id === lastCallId);
@@ -339,6 +349,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             lastCallId = latestCall.id;
+            lastCallShownAt = now;
             
             // Exibe a chamada
             displayCurrentCall(latestCall);
